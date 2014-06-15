@@ -1,0 +1,14 @@
+{
+  "name": "retext-range",
+  "repository": "wooorm/retext-range",
+  "description": "Sequences of content within a TextOM tree between two points",
+  "version": "0.0.1",
+  "keywords": [
+    "retext",
+    "range"
+  ],
+  "scripts" : [
+    "index.js"
+  ],
+  "license": "MIT"
+}
