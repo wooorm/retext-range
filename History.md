@@ -1,4 +1,11 @@
 
+n.n.n / 2014-07-12
+==================
+
+ * Added changelog
+ * Updated unit tests and documentation to reflect latest changes in textom
+ * Removed functionality to browserify unit tests by default; updated eslint, istanbul, retext
+
 0.0.3 / 2014-06-19
 ==================
 
