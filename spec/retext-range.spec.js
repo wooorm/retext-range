@@ -455,16 +455,16 @@ describe('TextOM.Range#toString()', function () {
         'equals `endContainer` and `startContainer` has no `length` ' +
         'property', function () {
             var range = new Range(),
-                wordNode = retext.parse('alfred').head.head.head;
+                textNode = retext.parse('alfred').head.head.head.head;
 
-            range.setStart(wordNode, 2);
-            range.setEnd(wordNode, 4);
+            range.setStart(textNode, 2);
+            range.setEnd(textNode, 4);
             assert(range.toString() === 'fr');
 
-            range.setEnd(wordNode);
+            range.setEnd(textNode);
             assert(range.toString() === 'fred');
 
-            range.setStart(wordNode);
+            range.setStart(textNode);
             assert(range.toString() === 'alfred');
         }
     );
@@ -475,11 +475,11 @@ describe('TextOM.Range#toString()', function () {
         '`length`property, and `endOffset` is larger than the result of ' +
         'calling the `toString` method on `startContainer`', function () {
             var range = new Range(),
-                wordNode = retext.parse('alfred').head.head.head;
+                textNode = retext.parse('alfred').head.head.head.head;
 
-            range.setStart(wordNode);
-            range.setEnd(wordNode);
-            wordNode.fromString('bert');
+            range.setStart(textNode);
+            range.setEnd(textNode);
+            textNode.fromString('bert');
             assert(range.toString() === 'bert');
         }
     );
@@ -490,59 +490,63 @@ describe('TextOM.Range#toString()', function () {
                 wordNode = retext.parse('alfred bertrand').head.head.head;
 
             range.setStart(wordNode);
-            range.setEnd(wordNode.next.next, 6);
+            range.setEnd(wordNode.next.next.head, 6);
             assert(range.toString() === 'alfred bertra');
         }
     );
 
     it('should concatenate two siblings', function () {
         var range = new Range(),
-            wordNode = retext.parse('alfred').head.head.head,
-            wordNode1 = wordNode.after(new TextOM.WordNode('bertrand'));
+            textNode1 = retext.parse('alfredbertrand').head.head.head.head,
+            textNode = textNode1.split(6);
 
-        range.setStart(wordNode);
-        range.setEnd(wordNode1);
+        range.setStart(textNode);
+        range.setEnd(textNode1);
         assert(range.toString() === 'alfredbertrand');
 
-        range.setStart(wordNode, 2);
+        range.setStart(textNode, 2);
         assert(range.toString() === 'fredbertrand');
 
-        range.setEnd(wordNode1, 6);
+        range.setEnd(textNode1, 6);
         assert(range.toString() === 'fredbertra');
     });
 
     it('should concatenate multiple siblings', function () {
         var range = new Range(),
-            sentenceNode = retext.parse(
-                'alfred bertrand cees dick eric ferdinand'
-            ).head.head;
+            wordNode = retext.parse(
+                'alfredbertrandceesdick'
+            ).head.head.head;
 
-        range.setStart(sentenceNode.head);
-        range.setEnd(sentenceNode.tail);
+        wordNode.head.split(6);
+        wordNode.tail.split(8);
+        wordNode.tail.split(4);
+
+        range.setStart(wordNode.head);
+        range.setEnd(wordNode.tail);
         assert(
-            range.toString() === 'alfred bertrand cees dick eric ferdinand'
+            range.toString() === 'alfredbertrandceesdick'
         );
 
-        range.setStart(sentenceNode.head, 3);
-        assert(range.toString() === 'red bertrand cees dick eric ferdinand');
+        range.setStart(wordNode.head, 3);
+        assert(range.toString() === 'redbertrandceesdick');
 
-        range.setEnd(sentenceNode.tail, 7);
-        assert(range.toString() === 'red bertrand cees dick eric ferdina');
+        range.setEnd(wordNode.tail, 2);
+        assert(range.toString() === 'redbertrandceesdi');
     });
 
     it('should concatenate children of different parents', function () {
         var range = new Range(),
-            paragraphNode = retext.parse('Alfred. Bertrand').head;
+            sentenceNode = retext.parse('Alfred bertrand').head.head;
 
-        range.setStart(paragraphNode.head.head);
-        range.setEnd(paragraphNode.tail.head);
-        assert(range.toString() === 'Alfred. Bertrand');
+        range.setStart(sentenceNode.head.head);
+        range.setEnd(sentenceNode.tail.head);
+        assert(range.toString() === 'Alfred bertrand');
 
-        range.setStart(paragraphNode.head.head, 1);
-        assert(range.toString() === 'lfred. Bertrand');
+        range.setStart(sentenceNode.head.head, 1);
+        assert(range.toString() === 'lfred bertrand');
 
-        range.setEnd(paragraphNode.tail.head, 5);
-        assert(range.toString() === 'lfred. Bertr');
+        range.setEnd(sentenceNode.tail.head, 5);
+        assert(range.toString() === 'lfred bertr');
     });
 
     it('should concatenate children of different grandparents',
@@ -550,26 +554,26 @@ describe('TextOM.Range#toString()', function () {
             var range = new Range(),
                 root = retext.parse('One. Two.\n\nThree. Four.');
 
-            range.setStart(root.head.head.head);
-            range.setEnd(root.tail.tail.head);
+            range.setStart(root.head.head.head.head);
+            range.setEnd(root.tail.tail.head.head);
             assert(range.toString() === 'One. Two.\n\nThree. Four');
 
-            range.setStart(root.head.head.head, 1);
+            range.setStart(root.head.head.head.head, 1);
             assert(range.toString() === 'ne. Two.\n\nThree. Four');
 
-            range.setEnd(root.tail.tail.head, 2);
+            range.setEnd(root.tail.tail.head.head, 2);
             assert(range.toString() === 'ne. Two.\n\nThree. Fo');
 
-            range.setStart(root.head.tail.head);
+            range.setStart(root.head.tail.head.head);
             assert(range.toString() === 'Two.\n\nThree. Fo');
 
-            range.setEnd(root.tail.head.head);
+            range.setEnd(root.tail.head.head.head);
             assert(range.toString() === 'Two.\n\nThree');
 
-            range.setStart(root.head.tail.head, 1);
+            range.setStart(root.head.tail.head.head, 1);
             assert(range.toString() === 'wo.\n\nThree');
 
-            range.setEnd(root.tail.head.head, 3);
+            range.setEnd(root.tail.head.head.head, 3);
             assert(range.toString() === 'wo.\n\nThr');
         }
     );
@@ -651,13 +655,13 @@ describe('TextOM.Range#removeContent()', function () {
     it('should return an empty array when startContainer equals ' +
         'endContainer and startOffset equals endOffset', function () {
             var range = new Range(),
-                sentenceNode = retext.parse('Alfred').head.head;
+                wordNode = retext.parse('Alfred').head.head.head;
 
-            range.setStart(sentenceNode.head, 2);
-            range.setEnd(sentenceNode.head, 2);
+            range.setStart(wordNode.head, 2);
+            range.setEnd(wordNode.head, 2);
             assert(range.removeContent().length === 0);
-            assert(sentenceNode.toString() === 'Alfred');
-            assert(sentenceNode.length === 1);
+            assert(wordNode.toString() === 'Alfred');
+            assert(wordNode.length === 1);
         }
     );
 
@@ -668,20 +672,20 @@ describe('TextOM.Range#removeContent()', function () {
             var range = new Range(),
                 sentenceNode = retext.parse('Alfred').head.head;
 
-            range.setStart(sentenceNode.head, 2);
-            range.setEnd(sentenceNode.head, 4);
+            range.setStart(sentenceNode.head.head, 2);
+            range.setEnd(sentenceNode.head.head, 4);
 
             assert(range.removeContent().toString() === 'fr');
             assert(sentenceNode.toString() === 'Aled');
-            assert(sentenceNode.length === 2);
+            assert(sentenceNode.head.length === 2);
 
             range = new Range();
             sentenceNode = retext.parse('Alfred').head.head;
-            range.setStart(sentenceNode.head, 2);
-            range.setEnd(sentenceNode.head);
+            range.setStart(sentenceNode.head.head, 2);
+            range.setEnd(sentenceNode.head.head);
             assert(range.removeContent().toString() === 'fred');
             assert(sentenceNode.toString() === 'Al');
-            assert(sentenceNode.length === 1);
+            assert(sentenceNode.head.length === 1);
 
             range = new Range();
             sentenceNode = retext.parse('Alfred').head.head;
@@ -698,14 +702,14 @@ describe('TextOM.Range#removeContent()', function () {
         'Node, and `endOffset` is larger than the length of ' +
         '`startContainer`', function () {
             var range = new Range(),
-                sentenceNode = retext.parse('Alfred').head.head,
-                wordNode = sentenceNode.head;
+                wordNode = retext.parse('Alfred').head.head.head,
+                textNode = wordNode.head;
 
-            range.setStart(wordNode);
-            range.setEnd(wordNode);
-            wordNode.fromString('Bert');
+            range.setStart(textNode);
+            range.setEnd(textNode);
+            textNode.fromString('Bert');
             assert(range.removeContent().toString() === 'Bert');
-            assert(sentenceNode.length === 0);
+            assert(wordNode.length === 0);
         }
     );
 
@@ -716,8 +720,8 @@ describe('TextOM.Range#removeContent()', function () {
                 sentenceNode = retext.parse('Alfred').head.head,
                 wordNode = sentenceNode.head;
 
-            range.setStart(wordNode);
-            range.setEnd(wordNode, 4);
+            range.setStart(wordNode.head);
+            range.setEnd(wordNode.head, 4);
             assert(range.removeContent().toString() === 'Alfr');
             assert(sentenceNode.toString() === 'ed');
             assert(sentenceNode.length === 1);
@@ -729,46 +733,48 @@ describe('TextOM.Range#removeContent()', function () {
             var range = new Range(),
                 sentenceNode = retext.parse('Alfred').head.head,
                 wordNode = sentenceNode.head,
-                wordNode1 = wordNode.after(new TextOM.WordNode('bertrand'));
+                wordNode1 = wordNode.after(new TextOM.WordNode());
 
-            range.setStart(wordNode);
-            range.setEnd(wordNode1, 6);
+            wordNode1.append(new TextOM.TextNode('bertrand'));
+
+            range.setStart(wordNode.head);
+            range.setEnd(wordNode1.head, 6);
             assert(range.removeContent().toString() === 'Alfred,bertra');
             assert(sentenceNode.toString() === 'nd');
-            assert(sentenceNode.length === 1);
+            assert(sentenceNode.tail.length === 1);
         }
     );
 
     it('should remove two siblings', function () {
         var range = new Range(),
-            sentenceNode = retext.parse('Alfred').head.head,
-            wordNode = sentenceNode.head,
-            wordNode1 = sentenceNode.append(new TextOM.WordNode('bertrand'));
+            wordNode = retext.parse('Alfredbertrand').head.head.head,
+            textNode1 = wordNode.head,
+            textNode = textNode1.split(6);
 
-        range.setStart(wordNode);
-        range.setEnd(wordNode1);
+        range.setStart(textNode);
+        range.setEnd(textNode1);
         assert(range.removeContent().toString() === 'Alfred,bertrand');
-        assert(sentenceNode.length === 0);
+        assert(wordNode.length === 0);
 
         range = new Range();
-        sentenceNode.append(wordNode);
-        sentenceNode.append(wordNode1);
-        range.setStart(wordNode, 2);
-        range.setEnd(wordNode1);
+        wordNode.append(textNode);
+        wordNode.append(textNode1);
+        range.setStart(textNode, 2);
+        range.setEnd(textNode1);
         assert(range.removeContent().toString() === 'fred,bertrand');
-        assert(sentenceNode.toString() === 'Al');
-        assert(sentenceNode.length === 1);
+        assert(wordNode.toString() === 'Al');
+        assert(wordNode.length === 1);
 
         range = new Range();
-        sentenceNode.head.remove(); // Remove 'Al'
-        wordNode.fromString('Alfred');
-        sentenceNode.append(wordNode);
-        sentenceNode.append(wordNode1);
-        range.setStart(wordNode, 2);
-        range.setEnd(wordNode1, 6);
+        wordNode.head.remove(); // Remove 'Al'
+        textNode.fromString('Alfred');
+        wordNode.append(textNode);
+        wordNode.append(textNode1);
+        range.setStart(textNode, 2);
+        range.setEnd(textNode1, 6);
         assert(range.removeContent().toString() === 'fred,bertra');
-        assert(sentenceNode.toString() === 'Alnd');
-        assert(sentenceNode.length === 2);
+        assert(wordNode.toString() === 'Alnd');
+        assert(wordNode.length === 2);
     });
 
     it('should remove multiple siblings', function () {
@@ -790,22 +796,22 @@ describe('TextOM.Range#removeContent()', function () {
         sentenceNode = retext.parse(
             'Alfred bertrand cees dick eric ferdinand'
         ).head.head;
-        range.setStart(sentenceNode.head, 3);
-        range.setEnd(sentenceNode.tail);
+        range.setStart(sentenceNode.head.head, 3);
+        range.setEnd(sentenceNode.tail.head);
 
         assert(
             range.removeContent().toString() ===
             'red, ,bertrand, ,cees, ,dick, ,eric, ,ferdinand'
         );
         assert(sentenceNode.toString() === 'Alf');
-        assert(sentenceNode.length === 1);
+        assert(sentenceNode.length === 2);
 
         range = new Range();
         sentenceNode = retext.parse(
             'Alfred bertrand cees dick eric ferdinand'
         ).head.head;
-        range.setStart(sentenceNode.head, 3);
-        range.setEnd(sentenceNode.tail, 7);
+        range.setStart(sentenceNode.head.head, 3);
+        range.setEnd(sentenceNode.tail.head, 7);
 
         assert(
             range.removeContent().toString() ===
@@ -819,28 +825,28 @@ describe('TextOM.Range#removeContent()', function () {
         var range = new Range(),
             paragraphNode = retext.parse('Alfred. Bertrand.').head;
 
-        range.setStart(paragraphNode.head.head);
-        range.setEnd(paragraphNode.tail.tail);
+        range.setStart(paragraphNode.head.head.head);
+        range.setEnd(paragraphNode.tail.tail.head);
 
         assert(range.removeContent().toString() === 'Alfred,., ,Bertrand,.');
-        assert(paragraphNode.head.length === 0);
-        assert(paragraphNode.tail.length === 0);
+        assert(paragraphNode.head.head.length === 0);
+        assert(paragraphNode.tail.head.length === 0);
 
         range = new Range();
         paragraphNode = retext.parse('Alfred. Bertrand.').head;
-        range.setStart(paragraphNode.head.head, 1);
-        range.setEnd(paragraphNode.tail.tail);
+        range.setStart(paragraphNode.head.head.head, 1);
+        range.setEnd(paragraphNode.tail.tail.head);
         assert(range.removeContent().toString() === 'lfred,., ,Bertrand,.');
-        assert(paragraphNode.head.length === 1);
+        assert(paragraphNode.head.head.length === 1);
         assert(paragraphNode.head.toString() === 'A');
-        assert(paragraphNode.tail.length === 0);
+        assert(paragraphNode.tail.head.length === 0);
 
         range = new Range();
         paragraphNode = retext.parse('Alfred. Bertrand.').head;
-        range.setStart(paragraphNode.head.head);
-        range.setEnd(paragraphNode.tail.head, 3);
+        range.setStart(paragraphNode.head.head.head);
+        range.setEnd(paragraphNode.tail.head.head, 3);
         assert(range.removeContent().toString() === 'Alfred,., ,Ber');
-        assert(paragraphNode.head.length === 0);
+        assert(paragraphNode.head.head.length === 0);
         assert(paragraphNode.tail.length === 2);
         assert(paragraphNode.tail.toString() === 'trand.');
     });
@@ -849,37 +855,37 @@ describe('TextOM.Range#removeContent()', function () {
         var range = new Range(),
             root = retext.parse('Alfred. Bertrand.\n\nCees. Dick.');
 
-        range.setStart(root.head.head.head);
-        range.setEnd(root.tail.tail.tail);
+        range.setStart(root.head.head.head.head);
+        range.setEnd(root.tail.tail.tail.head);
 
         assert(
             range.removeContent().toString() ===
             'Alfred,., ,Bertrand.,\n\n,Cees., ,Dick,.'
         );
         assert(root.head.length === 1);
-        assert(root.head.head.length === 0);
+        assert(root.head.head.head.length === 0);
         assert(root.tail.length === 1);
-        assert(root.tail.head.length === 0);
+        assert(root.tail.head.head.length === 0);
 
         range = new Range();
         root = retext.parse('Alfred. Bertrand.\n\nCees. Dick.');
-        range.setStart(root.head.head.head, 2);
-        range.setEnd(root.tail.tail.tail);
+        range.setStart(root.head.head.head.head, 2);
+        range.setEnd(root.tail.tail.tail.head);
 
         assert(
             range.removeContent().toString() ===
             'fred,., ,Bertrand.,\n\n,Cees., ,Dick,.'
         );
-        assert(root.head.length === 1);
         assert(root.head.head.length === 1);
-        assert(root.head.head.toString() === 'Al');
-        assert(root.tail.length === 1);
-        assert(root.tail.head.length === 0);
+        assert(root.head.head.head.length === 1);
+        assert(root.head.head.head.toString() === 'Al');
+        assert(root.tail.head.length === 1);
+        assert(root.tail.head.head.length === 0);
 
         range = new Range();
         root = retext.parse('Alfred. Bertrand.\n\nCees. Dick.');
-        range.setStart(root.head.tail.head);
-        range.setEnd(root.tail.tail.head, 3);
+        range.setStart(root.head.tail.head.head);
+        range.setEnd(root.tail.tail.head.head, 3);
 
         assert(
             range.removeContent().toString() ===
@@ -896,8 +902,8 @@ describe('TextOM.Range#removeContent()', function () {
 
         range = new Range();
         root = retext.parse('Alfred. Bertrand.\n\nCees. Dick.');
-        range.setStart(root.head.head.head, 3);
-        range.setEnd(root.tail.tail.head, 3);
+        range.setStart(root.head.head.head.head, 3);
+        range.setEnd(root.tail.tail.head.head, 3);
 
         assert(
             range.removeContent().toString() ===
@@ -954,12 +960,12 @@ describe('TextOM.Range#getContent()', function () {
     it('should return an array containging `startContainer` when ' +
         '`startContainer` equals `endContainer`', function () {
             var range = new Range(),
-                sentenceNode = retext.parse('Alfred').head.head;
+                wordNode = retext.parse('Alfred').head.head.head;
 
-            range.setStart(sentenceNode.head, 2);
-            range.setEnd(sentenceNode.head, 2);
+            range.setStart(wordNode.head, 2);
+            range.setEnd(wordNode.head, 2);
             assert(range.getContent().length === 1);
-            assert(range.getContent()[0] === sentenceNode.head);
+            assert(range.getContent()[0] === wordNode.head);
         }
     );
 
@@ -981,16 +987,16 @@ describe('TextOM.Range#getContent()', function () {
     it('should return an array containing two direct siblings',
         function () {
             var range = new Range(),
-                wordNode = retext.parse('Alfred').head.head.head,
-                wordNode1 = wordNode.after(new TextOM.WordNode('bertrand')),
+                textNode1 = retext.parse('Alfredbert').head.head.head.head,
+                textNode = textNode1.split(6),
                 result;
 
-            range.setStart(wordNode);
-            range.setEnd(wordNode1);
+            range.setStart(textNode);
+            range.setEnd(textNode1);
             result = range.getContent();
             assert(result.length === 2);
-            assert(result[0] === wordNode);
-            assert(result[1] === wordNode1);
+            assert(result[0] === textNode);
+            assert(result[1] === textNode1);
         }
     );
 
@@ -1011,7 +1017,7 @@ describe('TextOM.Range#getContent()', function () {
                 'Alfred, ,bertrand, ,cees, ,dick, ,eric, ,ferdinand,.'
             );
 
-            range.setStart(sentenceNode.head, 3);
+            range.setStart(sentenceNode.head.head, 3);
             result = range.getContent();
             assert(result.length === 12);
             assert(
@@ -1032,14 +1038,14 @@ describe('TextOM.Range#getContent()', function () {
     it('should return an array containing text children of different parents',
         function () {
             var range = new Range(),
-                paragraphNode = retext.parse('Alfred. Bertrand.').head,
+                sentenceNode = retext.parse('Alfred bertrand.').head.head,
                 result;
 
-            range.setStart(paragraphNode.head.head);
-            range.setEnd(paragraphNode.tail.tail);
+            range.setStart(sentenceNode.head.head);
+            range.setEnd(sentenceNode.tail.head);
             result = range.getContent();
-            assert(result.toString() === 'Alfred,., ,Bertrand,.');
-            assert(result.length === 5);
+            assert(result.toString() === 'Alfred, ,bertrand,.');
+            assert(result.length === 4);
         }
     );
 
@@ -1049,8 +1055,8 @@ describe('TextOM.Range#getContent()', function () {
                 root = retext.parse('Alfred.\n\nBertrand.'),
                 result;
 
-            range.setStart(root.head.head.head);
-            range.setEnd(root.tail.head.tail);
+            range.setStart(root.head.head.head.head);
+            range.setEnd(root.tail.head.tail.head);
             result = range.getContent();
             assert(result.toString() === 'Alfred,.,\n\n,Bertrand,.');
             assert(result.length === 5);
@@ -1193,7 +1199,7 @@ describe('TextOM.Range#getContent()', function () {
                 result;
 
             range.setStart(root.head.head, Infinity);
-            range.setEnd(root.tail.tail.tail);
+            range.setEnd(root.tail.tail.tail.head);
             result = range.getContent();
             assert(result.toString() === ' ,Bertrand.,\n\n,Cees., ,Dick,.');
 

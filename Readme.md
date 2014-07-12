@@ -38,36 +38,65 @@ var root = new Retext()
  * RootNode:
  * └─ ParagraphNode:
  *    ├─ SentenceNode:
- *    │   ├─ WordNode: "Some"
- *    │   ├─ WhiteSpaceNode: " "
- *    │   ├─ WordNode: "simple"
- *    │   ├─ WhiteSpaceNode: " "
- *    │   ├─ WordNode: "English"
- *    │   ├─ WhiteSpaceNode: " "
- *    │   ├─ WordNode: "words"
- *    │   ├─ WhiteSpaceNode: " "
- *    │   ├─ WordNode: "in"
- *    │   ├─ WhiteSpaceNode: " "
- *    │   ├─ WordNode: "a"
- *    │   ├─ WhiteSpaceNode: " "
- *    │   ├─ WordNode: "sentence"
- *    │   └─ PunctuationNode: "."
- *    ├─ WhiteSpaceNode: " "
+ *    │   ├─ WordNode:
+ *    │   |   └─ "Some"
+ *    │   ├─ WhiteSpaceNode:
+ *    │   |   └─ " "
+ *    │   ├─ WordNode:
+ *    │   |   └─ "simple"
+ *    │   ├─ WhiteSpaceNode:
+ *    │   |   └─ " "
+ *    │   ├─ WordNode:
+ *    │   |   └─ "English"
+ *    │   ├─ WhiteSpaceNode:
+ *    │   |   └─ " "
+ *    │   ├─ WordNode:
+ *    │   |   └─ "words"
+ *    │   ├─ WhiteSpaceNode:
+ *    │   |   └─ " "
+ *    │   ├─ WordNode:
+ *    │   |   └─ "in"
+ *    │   ├─ WhiteSpaceNode:
+ *    │   |   └─ " "
+ *    │   ├─ WordNode:
+ *    │   |   └─ "a"
+ *    │   ├─ WhiteSpaceNode:
+ *    │   |   └─ " "
+ *    │   ├─ WordNode:
+ *    │   |   └─ "sentence"
+ *    │   └─ PunctuationNode:
+ *    │       └─ "."
+ *    ├─ WhiteSpaceNode:
+ *    │   └─ " "
  *    └─ SentenceNode:
- *        ├─ WordNode: "And"
- *        ├─ WhiteSpaceNode: " "
- *        ├─ WordNode: "some"
- *        ├─ WhiteSpaceNode: " "
- *        ├─ WordNode: "more"
- *        ├─ WhiteSpaceNode: " "
- *        ├─ WordNode: "words"
- *        ├─ WhiteSpaceNode: " "
- *        ├─ WordNode: "in"
- *        ├─ WhiteSpaceNode: " "
- *        ├─ WordNode: "another"
- *        ├─ WhiteSpaceNode: " "
- *        ├─ WordNode: "sentence"
- *        └─ PunctuationNode: "."
+ *        ├─ WordNode:
+ *        |   └─ "And"
+ *        ├─ WhiteSpaceNode:
+ *        |   └─ " "
+ *        ├─ WordNode:
+ *        |   └─ "some"
+ *        ├─ WhiteSpaceNode:
+ *        |   └─ " "
+ *        ├─ WordNode:
+ *        |   └─ "more"
+ *        ├─ WhiteSpaceNode:
+ *        |   └─ " "
+ *        ├─ WordNode:
+ *        |   └─ "words"
+ *        ├─ WhiteSpaceNode:
+ *        |   └─ " "
+ *        ├─ WordNode:
+ *        |   └─ "in"
+ *        ├─ WhiteSpaceNode:
+ *        |   └─ " "
+ *        ├─ WordNode:
+ *        |   └─ "another"
+ *        ├─ WhiteSpaceNode:
+ *        |   └─ " "
+ *        ├─ WordNode:
+ *        |   └─ "sentence"
+ *        └─ PunctuationNode:
+ *            └─ "."
  */
 
 var range = new root.TextOM.Range(),
@@ -78,7 +107,7 @@ var range = new root.TextOM.Range(),
 
 // Select some content:
 range.setStart(start); 
-range.setEnd(end, 1); // "a|nother"
+range.setEnd(end.head, 1); // "a|nother"
 
 // Remove the content covered by the range:
 range.removeContent();
@@ -88,22 +117,37 @@ range.removeContent();
  * RootNode:
  * └─ ParagraphNode:
  *    ├─ SentenceNode:
- *    │   ├─ WordNode: "Some"
- *    │   ├─ WhiteSpaceNode: " "
- *    │   ├─ WordNode: "simple"
- *    │   ├─ WhiteSpaceNode: " "
- *    │   ├─ WordNode: "English"
- *    │   ├─ WhiteSpaceNode: " "
- *    │   ├─ WordNode: "words"
- *    │   ├─ WhiteSpaceNode: " "
- *    │   ├─ WordNode: "in"
- *    │   ├─ WhiteSpaceNode: " "
- *    │   └─ WordNode: "a"
+ *    │   ├─ WordNode:
+ *    |   |   └─ "Some"
+ *    │   ├─ WhiteSpaceNode:
+ *    |   |   └─ " "
+ *    │   ├─ WordNode:
+ *    |   |   └─ "simple"
+ *    │   ├─ WhiteSpaceNode:
+ *    |   |   └─ " "
+ *    │   ├─ WordNode:
+ *    |   |   └─ "English"
+ *    │   ├─ WhiteSpaceNode:
+ *    |   |   └─ " "
+ *    │   ├─ WordNode:
+ *    |   |   └─ "words"
+ *    │   ├─ WhiteSpaceNode:
+ *    |   |   └─ " "
+ *    │   ├─ WordNode:
+ *    |   |   └─ "in"
+ *    │   ├─ WhiteSpaceNode:
+ *    |   |   └─ " "
+ *    │   └─ WordNode:
+ *    |       └─ "a"
  *    └─ SentenceNode:
- *        ├─ WordNode: "nother"
- *        ├─ WhiteSpaceNode: " "
- *        ├─ WordNode: "sentence"
- *        └─ PunctuationNode: "."
+ *        ├─ WordNode:
+ *        |   └─ "nother"
+ *        ├─ WhiteSpaceNode:
+ *        |   └─ " "
+ *        ├─ WordNode:
+ *        |   └─ "sentence"
+ *        └─ PunctuationNode:
+ *            └─ "."
  */
 ```
 
@@ -133,7 +177,7 @@ Return the result of calling `toString` on each completely covered node inside `
 Removes each completely covered node inside `range`, splitting partially covered nodes when necessary. Returns an array containing the removed nodes.
 
 ##### TextOM\.Range#getContent()
-Returns an array containing each completely covered node inside `range`, ignores partially covered Text nodes (Word, WhiteSpace, and Punctuation).
+Returns an array containing each completely covered node inside `range`, ignores partially covered Text nodes (TextNode, SourceNode).
 
 ## Browser Support
 Pretty much every browser (available through BrowserStack) runs all retext-content unit tests.
