@@ -180,7 +180,7 @@ Removes each completely covered node inside `range`, splitting partially covered
 Returns an array containing each completely covered node inside `range`, ignores partially covered Text nodes (TextNode, SourceNode).
 
 ## Browser Support
-Pretty much every browser (available through BrowserStack) runs all retext-content unit tests.
+Pretty much every browser (available through BrowserStack) runs all retext-range unit tests.
 
 ## License
 
