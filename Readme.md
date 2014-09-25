@@ -175,4 +175,4 @@ Returns an array containing each completely covered node inside `range`, ignores
 
 ## License
 
-  MIT
+MIT © Titus Wormer
