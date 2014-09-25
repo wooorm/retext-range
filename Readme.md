@@ -1,6 +1,6 @@
 # retext-range [![Build Status](https://travis-ci.org/wooorm/retext-range.svg?branch=master)](https://travis-ci.org/wooorm/retext-range) [![Coverage Status](https://img.shields.io/coveralls/wooorm/retext-range.svg)](https://coveralls.io/r/wooorm/retext-range?branch=master)
 
-Ranges—similar to DOM’s [Range](http://dom.spec.whatwg.org/#introduction-to-dom-ranges)—for [retext](https://github.com/wooorm/retext "Retext"): A Range object represents a sequence of content within a TextOM tree. Each range has a start and an end (two “boundary points”—each in turn a node and an offset). In other words, a range represents a piece of content within a TextOM tree between two points.
+Ranges—similar to DOMs [Range](http://dom.spec.whatwg.org/#introduction-to-dom-ranges)—for [**retext**](https://github.com/wooorm/retext "Retext"): A **Range** represents a sequence of content within a **TextOM** tree. Each range has a start and an end (two “boundary points”—each a node and an offset). In other words, a range represents a piece of content within a TextOM tree between two points.
 
 ## Installation
 
@@ -22,161 +22,86 @@ $ bower install retext-range
 ## Usage
 
 ```js
-var Retext = require('retext'),
-    retextRange = require('retext-range');
+var Retext, retextRange, retext;
 
-var root = new Retext()
-    .use(retextRange)
-    .parse(
-        'Some simple English words in a sentence. And some ' +
-        'more words in another sentence.'
-    );
+Retext = require('retext');
+retextRange = require('retext-range');
 
-/* The tree now looks as follows:
- *
- * RootNode:
- * └─ ParagraphNode:
- *    ├─ SentenceNode:
- *    │   ├─ WordNode:
- *    │   |   └─ "Some"
- *    │   ├─ WhiteSpaceNode:
- *    │   |   └─ " "
- *    │   ├─ WordNode:
- *    │   |   └─ "simple"
- *    │   ├─ WhiteSpaceNode:
- *    │   |   └─ " "
- *    │   ├─ WordNode:
- *    │   |   └─ "English"
- *    │   ├─ WhiteSpaceNode:
- *    │   |   └─ " "
- *    │   ├─ WordNode:
- *    │   |   └─ "words"
- *    │   ├─ WhiteSpaceNode:
- *    │   |   └─ " "
- *    │   ├─ WordNode:
- *    │   |   └─ "in"
- *    │   ├─ WhiteSpaceNode:
- *    │   |   └─ " "
- *    │   ├─ WordNode:
- *    │   |   └─ "a"
- *    │   ├─ WhiteSpaceNode:
- *    │   |   └─ " "
- *    │   ├─ WordNode:
- *    │   |   └─ "sentence"
- *    │   └─ PunctuationNode:
- *    │       └─ "."
- *    ├─ WhiteSpaceNode:
- *    │   └─ " "
- *    └─ SentenceNode:
- *        ├─ WordNode:
- *        |   └─ "And"
- *        ├─ WhiteSpaceNode:
- *        |   └─ " "
- *        ├─ WordNode:
- *        |   └─ "some"
- *        ├─ WhiteSpaceNode:
- *        |   └─ " "
- *        ├─ WordNode:
- *        |   └─ "more"
- *        ├─ WhiteSpaceNode:
- *        |   └─ " "
- *        ├─ WordNode:
- *        |   └─ "words"
- *        ├─ WhiteSpaceNode:
- *        |   └─ " "
- *        ├─ WordNode:
- *        |   └─ "in"
- *        ├─ WhiteSpaceNode:
- *        |   └─ " "
- *        ├─ WordNode:
- *        |   └─ "another"
- *        ├─ WhiteSpaceNode:
- *        |   └─ " "
- *        ├─ WordNode:
- *        |   └─ "sentence"
- *        └─ PunctuationNode:
- *            └─ "."
- */
+retext = new Retext().use(retextRange);
 
-var range = new root.TextOM.Range(),
-    firstSentenceNode = root.head.head,
-    lastSentenceNode = root.head.tail,
-    start = firstSentenceNode[11], // WhiteSpaceNode: " ", after "a"
-    end = lastSentenceNode[10]; // WordNode: "another"
+retext.parse(
+    'Some simple English words in a sentence. And some ' +
+    'more words in another sentence.',
+    function (err, tree) {
+        var range, firstSentence, lastSentence, start, end;
 
-// Select some content:
-range.setStart(start); 
-range.setEnd(end.head, 1); // "a|nother"
+        /* Handle errors. */
+        if (err) {
+            throw err;
+        }
 
-// Remove the content covered by the range:
-range.removeContent();
+        range = new tree.TextOM.Range();
+        firstSentence = tree.head.head;
+        lastSentence = tree.head.tail;
 
-/* The tree now looks as follows:
- *
- * RootNode:
- * └─ ParagraphNode:
- *    ├─ SentenceNode:
- *    │   ├─ WordNode:
- *    |   |   └─ "Some"
- *    │   ├─ WhiteSpaceNode:
- *    |   |   └─ " "
- *    │   ├─ WordNode:
- *    |   |   └─ "simple"
- *    │   ├─ WhiteSpaceNode:
- *    |   |   └─ " "
- *    │   ├─ WordNode:
- *    |   |   └─ "English"
- *    │   ├─ WhiteSpaceNode:
- *    |   |   └─ " "
- *    │   ├─ WordNode:
- *    |   |   └─ "words"
- *    │   ├─ WhiteSpaceNode:
- *    |   |   └─ " "
- *    │   ├─ WordNode:
- *    |   |   └─ "in"
- *    │   ├─ WhiteSpaceNode:
- *    |   |   └─ " "
- *    │   └─ WordNode:
- *    |       └─ "a"
- *    └─ SentenceNode:
- *        ├─ WordNode:
- *        |   └─ "nother"
- *        ├─ WhiteSpaceNode:
- *        |   └─ " "
- *        ├─ WordNode:
- *        |   └─ "sentence"
- *        └─ PunctuationNode:
- *            └─ "."
- */
+        /* WhiteSpaceNode: " ", after "a" */
+        start = firstSentence[11];
+
+        /* WordNode: "another" */
+        end = lastSentence[10];
+
+        /* Select some content: */
+        range.setStart(start);
+        range.setEnd(end.head, 1); /* "a|nother" */
+
+        /* Remove the content covered by the range: */
+        range.removeContent();
+
+        tree.toString();
+        /* "Some simple English words in a nother sentence." */
+    }
+);
 ```
 
-Note that the sentences are **not** joined together, retext-range is agnostic about content (meaning), and just looks at the nodes the user selects. The white space between the two sentences is however removed, as it was completely covered by the range.
+Note that the sentences are **not** joined together, **retext-range** is agnostic about content (meaning), and just looks at the selected nodes. The white space between the two sentences is however removed, as it was completely covered by the range.
 
 ## API
 
 #### TextOM.Range()
-Constructor. Creates a new Range (an object allowing for cross-tree manipulation).
+
+Constructor. Creates a new Range.
 
 ##### TextOM\.Range#setStart(node, offset?)
+
 Set the start container and offset of a range.
 
-- node (`Node`): The node to start the range at or in;
-- offset (Non-negative integer [`Number`], `null`, or `Infinity`): Point to end at, defaults to `null`.
+- node (`Node`): Node to start the range at.
+- offset (Non-negative integer [`number`], `null`, or `Infinity`): Point to start at, defaults to `0`.
+
+Returns self.
 
 ##### TextOM\.Range#setEnd(node, offset?)
+
 Set the end container and offset of a range.
 
-- node (`Node`): The node to end the range at or in;
+- node (`Node`): Node to end the range at.
 - offset (Non-negative integer [`Number`], `null`, or `Infinity`): Point to end at, defaults to `Infinity`.
 
+Returns self.
+
 ##### TextOM\.Range#toString()
-Return the result of calling `toString` on each completely covered node inside `range`, sub-stringing partially covered nodes when necessary.
+
+Returns the result of calling `toString` on each completely covered node inside `range`, sub-stringing partially covered nodes where necessary.
 
 ##### TextOM\.Range#removeContent()
-Removes each completely covered node inside `range`, splitting partially covered nodes when necessary. Returns an array containing the removed nodes.
+
+Removes each completely covered node inside `range`, removes the covered part of partially covered nodes.
+
+Returns an array containing the removed nodes.
 
 ##### TextOM\.Range#getContent()
-Returns an array containing each completely covered node inside `range`, ignores partially covered Text nodes (TextNode, SourceNode).
+
+Returns an array containing each completely covered node inside `range`, ignores partially covered `Text` nodes (`TextNode`, `SourceNode`).
 
 ## License
 
