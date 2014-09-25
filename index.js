@@ -1,11 +1,30 @@
 'use strict';
 
-exports = module.exports = function () {};
+/**
+ * Constants.
+ */
 
-var arraySlice = Array.prototype.slice;
+var slice;
+
+slice = Array.prototype.slice;
+
+/**
+ * Define `retextRange`.
+ */
+
+function retextRange() {}
+
+/**
+ * Get all ancestors of a node.
+ *
+ * @param {Node}
+ * @return {Array.<Node>}
+ */
 
 function findAncestors(node) {
-    var result = [];
+    var result;
+
+    result = [];
 
     while (node) {
         if (!node.parent) {
@@ -18,15 +37,34 @@ function findAncestors(node) {
     }
 }
 
+/**
+ * Get the root of a node.
+ *
+ * @param {Node}
+ * @return {(Node|null)}
+ */
+
 function findRoot(node) {
-    var result = findAncestors(node);
+    var result;
+
+    result = findAncestors(node);
 
     return result[result.length - 1].parent;
 }
 
+/**
+ * Find the first next node, including siblings
+ * of ancestors.
+ *
+ * @param {Node}
+ * @return {(Node|null)}
+ */
+
 function findNextAncestor(node) {
     while (node) {
-        if ((node = node.parent) && node.next) {
+        node = node.parent;
+
+        if (node && node.next) {
             return node.next;
         }
     }
@@ -34,12 +72,19 @@ function findNextAncestor(node) {
     return null;
 }
 
+/**
+ * Define `attach`.
+ *
+ * @param {Retext} retext - Instance of Retext.
+ */
+
 function attach(retext) {
     var rangePrototype;
 
     /**
-     * Expose Range.
+     * Create `Range`.
      */
+
     function Range() {}
 
     rangePrototype = Range.prototype;
@@ -47,87 +92,112 @@ function attach(retext) {
     /**
      * The starting node of a range, null otherwise.
      *
-     * @api public
-     * @type {?Node}
+     * @type {Node?}
      * @readonly
      */
+
     rangePrototype.startContainer = null;
 
     /**
      * The starting offset of a range `null` when not existing.
      *
-     * @api public
-     * @type {?number}
+     * @type {number?}
      * @readonly
      */
+
     rangePrototype.startOffset = null;
 
     /**
      * The ending node of a range, null otherwise.
      *
-     * @api public
-     * @type {?Node}
+     * @type {Node?}
      * @readonly
      */
+
     rangePrototype.endContainer = null;
 
     /**
      * The ending offset of a range, `null` when not existing.
      *
-     * @api public
-     * @type {?number}
+     * @type {number?}
      * @readonly
      */
+
     rangePrototype.endOffset = null;
 
     /**
-     * Set the start container and offset of a range.
+     * Set the start of a range.
      *
-     * @param {Node} startContainer - the start container to start the range
-     *                                at.
-     * @param {?number} offset - (integer) the start offset of the container
-     *                           to start the range at;
-     * @api public
+     * @param {Node} container - Node to start the range at.
+     * @param {number?} offset - Offset of `container`.
      */
-    rangePrototype.setStart = function (startContainer, offset) {
-        if (!startContainer) {
-            throw new TypeError('\'' + startContainer + ' is not a valid ' +
-                'argument for \'Range.prototype.setStart\'');
+
+    rangePrototype.setStart = function (container, offset) {
+        var self,
+            endContainer,
+            endOffset,
+            offsetIsDefault,
+            shouldSwitch,
+            endAncestors,
+            node;
+
+        if (!container) {
+            throw new TypeError(
+                '`' + container + '` is not a valid `container` for ' +
+                '`Range#setStart(container, offset)`'
+            );
         }
 
-        var self = this,
-            endContainer = self.endContainer,
-            endOffset = self.endOffset,
-            offsetIsDefault = false,
-            wouldBeValid = false,
-            endAncestors, node;
+        self = this;
 
-        if (offset === null || offset === undefined || offset !== offset) {
+        offsetIsDefault = false;
+
+        if (
+            offset === null ||
+            offset === undefined ||
+            offset !== offset
+        ) {
             offset = 0;
             offsetIsDefault = true;
-        } else if (typeof offset !== 'number' || offset < 0) {
-            throw new TypeError('\'' + offset + ' is not a valid argument ' +
-                'for \'Range.prototype.setStart\'');
+        } else if (
+            typeof offset !== 'number' ||
+            offset < 0
+        ) {
+            throw new TypeError(
+                '`' + offset + '` is not a valid `offset` for ' +
+                '`Range#setStart(container, offset)`'
+            );
         }
 
+        endContainer = self.endContainer;
+        endOffset = self.endOffset;
+
+        shouldSwitch = true;
+
         if (!endContainer) {
-            wouldBeValid = true;
+            shouldSwitch = false;
         } else {
-            if (findRoot(endContainer) !== findRoot(startContainer)) {
-                throw new Error('WrongRootError: The given startContainer ' +
-                    'is in the wrong document.');
+            if (findRoot(endContainer) !== findRoot(container)) {
+                throw new Error(
+                    'WrongRootError: `container` is in the wrong document'
+                );
             }
 
-            /* When startContainer is also the endContainer; */
-            if (endContainer === startContainer) {
-                wouldBeValid = endOffset >= offset;
+            /**
+             * When container is also the endContainer.
+             */
+
+            if (endContainer === container) {
+                shouldSwitch = endOffset < offset;
             } else {
                 endAncestors = findAncestors(endContainer);
-                node = startContainer;
+
+                node = container;
 
                 while (node) {
                     if (node === endContainer) {
-                        wouldBeValid = true;
+                        shouldSwitch = false;
+
                         break;
                     }
 
@@ -140,64 +210,83 @@ function attach(retext) {
             }
         }
 
-        if (wouldBeValid) {
-            self.startContainer = startContainer;
-            self.startOffset = offset;
-        } else {
-            self.endContainer = startContainer;
+        if (shouldSwitch) {
+            self.endContainer = container;
             self.endOffset = offsetIsDefault ? Infinity : offset;
             self.startContainer = endContainer;
             self.startOffset = endOffset;
+        } else {
+            self.startContainer = container;
+            self.startOffset = offset;
         }
     };
 
     /**
-     * Set the end container and offset of a range.
+     * Set the end of a range.
      *
-     * @param {Node} endContainer - the end container to start the range at.
-     * @param {?number} offset - (integer) the end offset of the container to
-     *                           end the range at;
-     * @api public
+     * @param {Node} container - Node to end the range at.
+     * @param {number?} offset - Offset of `container`.
      */
-    rangePrototype.setEnd = function (endContainer, offset) {
-        if (!endContainer) {
-            throw new TypeError('\'' + endContainer + ' is not a valid ' +
-                'argument for \'Range.prototype.setEnd\'');
+
+    rangePrototype.setEnd = function (container, offset) {
+        var self,
+            startContainer,
+            startOffset,
+            offsetIsDefault,
+            shouldSwitch,
+            endAncestors,
+            node;
+
+        if (!container) {
+            throw new Error(
+                '`' + container + '` is not a valid `container` for ' +
+                '`Range#setEnd(container, offset)`'
+            );
         }
 
-        var self = this,
-            startContainer = self.startContainer,
-            startOffset = self.startOffset,
-            offsetIsDefault = false,
-            wouldBeValid = false,
-            endAncestors, node;
+        self = this;
+
+        offsetIsDefault = false;
 
         if (offset === null || offset === undefined || offset !== offset) {
             offset = Infinity;
             offsetIsDefault = true;
         } else if (typeof offset !== 'number' || offset < 0) {
-            throw new TypeError('\'' + offset + ' is not a valid argument ' +
-                'for \'Range.prototype.setEnd\'');
+            throw new TypeError(
+                '`' + offset + '` is not a valid `offset` for ' +
+                '`Range#setStart(container, offset)`'
+            );
         }
 
+        startContainer = self.startContainer;
+        startOffset = self.startOffset;
+
+        shouldSwitch = true;
+
         if (!startContainer) {
-            wouldBeValid = true;
+            shouldSwitch = false;
         } else {
-            if (findRoot(startContainer) !== findRoot(endContainer)) {
-                throw new Error('WrongRootError: The given endContainer ' +
-                    'is in the wrong document.');
+            if (findRoot(startContainer) !== findRoot(container)) {
+                throw new Error(
+                    'WrongRootError: `container` is in the wrong document'
+                );
             }
 
-            /* When endContainer is also the startContainer; */
-            if (startContainer === endContainer) {
-                wouldBeValid = startOffset <= offset;
+            /**
+             * When container is also the startContainer.
+             */
+
+            if (startContainer === container) {
+                shouldSwitch = startOffset > offset;
             } else {
-                endAncestors = findAncestors(endContainer);
+                endAncestors = findAncestors(container);
+
                 node = startContainer;
 
                 while (node) {
-                    if (node === endContainer) {
-                        wouldBeValid = true;
+                    if (node === container) {
+                        shouldSwitch = false;
+
                         break;
                     }
 
@@ -210,39 +299,53 @@ function attach(retext) {
             }
         }
 
-        if (wouldBeValid) {
-            self.endContainer = endContainer;
-            self.endOffset = offset;
-        } else {
-            self.startContainer = endContainer;
+        if (shouldSwitch) {
+            self.startContainer = container;
             self.startOffset = offsetIsDefault ? 0 : offset;
             self.endContainer = startContainer;
             self.endOffset = startOffset;
+        } else {
+            self.endContainer = container;
+            self.endOffset = offset;
         }
     };
 
     /**
-     * Return the result of calling `toString` on each of Text node inside
-     * `range`, substringing when necessary;
+     * Stringify every node in a range, substringing
+     * where necessary;
      *
      * @return {String}
-     * @api public
      */
+
     rangePrototype.toString = function () {
-        var content = this.getContent(),
-            startOffset = this.startOffset,
-            endOffset = this.endOffset,
-            startContainer = this.startContainer,
-            endContainer = this.endContainer,
-            startIsText, index;
+        var self,
+            content,
+            startOffset,
+            endOffset,
+            startContainer,
+            endContainer,
+            startIsText,
+            index;
+
+        self = this;
+
+        content = self.getContent();
 
         if (content.length === 0) {
             return '';
         }
 
+        startOffset = self.startOffset;
+        endOffset = self.endOffset;
+        startContainer = self.startContainer;
+        endContainer = self.endContainer;
+
         startIsText = !('length' in startContainer);
 
-        if (startContainer === endContainer && startIsText) {
+        if (
+            startContainer === endContainer &&
+            startIsText
+        ) {
             return startContainer.toString().slice(startOffset, endOffset);
         }
 
@@ -259,40 +362,61 @@ function attach(retext) {
     };
 
     /**
-     * Removes all nodes completely covered by `range` and removes the parts
-     * covered by `range` in partial covered nodes.
+     * Remove all nodes covered by `range` and remove
+     * partially covered parts.
      *
-     * @return {Node[]} content - The removed nodes.
-     * @api public
+     * @return {Array.<Node>} Removed nodes.
      */
+
     rangePrototype.removeContent = function () {
-        var content = this.getContent(),
-            startOffset = this.startOffset,
-            endOffset = this.endOffset,
-            startContainer = this.startContainer,
-            endContainer = this.endContainer,
-            iterator = -1,
-            startIsText, startValue, middle;
+        var self,
+            content,
+            startOffset,
+            endOffset,
+            startContainer,
+            endContainer,
+            index,
+            startIsText,
+            startValue,
+            middle;
+
+        self = this;
+
+        content = self.getContent();
 
         if (content.length === 0) {
             return content;
         }
 
-        startIsText = !('length' in startContainer);
+        startOffset = self.startOffset;
+        endOffset = self.endOffset;
+        startContainer = self.startContainer;
+        endContainer = self.endContainer;
+
         startValue = startContainer.toString();
 
-        if (startContainer === endContainer && startIsText) {
+        startIsText = !('length' in startContainer);
+
+        if (
+            startIsText &&
+            startContainer === endContainer
+        ) {
             if (startOffset === endOffset) {
                 return [];
             }
 
-            if (startOffset === 0 && endOffset >= startValue.length) {
+            if (
+                startOffset === 0 &&
+                endOffset >= startValue.length
+            ) {
                 startContainer.remove();
+
                 return content;
             }
 
             if (startOffset !== 0) {
                 startContainer.split(startOffset);
+
                 endOffset -= startOffset;
             }
 
@@ -301,161 +425,223 @@ function attach(retext) {
             }
 
             startContainer = middle || startContainer;
+
             startContainer.remove();
 
             return [startContainer];
         }
 
-        if (startIsText && startOffset > 0) {
+        if (
+            startIsText &&
+            startOffset > 0
+        ) {
             startContainer.split(startOffset);
+
             content[0] = startContainer;
         }
 
-        if (!('length' in endContainer) &&
-            endOffset < endContainer.toString().length) {
-                content[content.length - 1] = endContainer.split(endOffset);
+        if (
+            !('length' in endContainer) &&
+            endOffset < endContainer.toString().length
+        ) {
+            content[content.length - 1] = endContainer.split(endOffset);
         }
 
-        while (content[++iterator]) {
-            content[iterator].remove();
+        index = -1;
+
+        while (content[++index]) {
+            content[index].remove();
         }
 
         return content;
     };
 
     /**
-     * Return the nodes in a range as an array. If a nodes parent is
-     * completely encapsulated by the range, returns that parent. Ignores
-     * startOffset (i.e., treats as `0`) when startContainer is a text node.
-     * Ignores endOffset (i.e., treats as `Infinity`) when endContainer is a
-     * text node.
+     * Get the nodes in a range as an array.
      *
-     * @return {Node[]} content - The nodes completely encapsulated by
-     *                            the range.
-     * @api public
+     * If a node's parent is completely encapsulated by
+     * the range, returns that parent. Treats
+     * `startOffset` as `0`) when `startContainer` is
+     * `Text`. Treats `endOffset` as `Infinity`) when
+     * `endContainer` is `Text`.
+     *
+     * @return {Array.<Node>} Completely covered nodes.
      */
-    rangePrototype.getContent = function () {
-        var content = [],
-            self = this,
-            startContainer = self.startContainer,
-            startOffset = self.startOffset,
-            endContainer = self.endContainer,
-            endOffset = self.endOffset,
-            endAncestors, node;
 
-        /*
+    rangePrototype.getContent = function () {
+        var content,
+            self,
+            startContainer,
+            startOffset,
+            endContainer,
+            endOffset,
+            endAncestors,
+            node;
+
+        self = this;
+
+        startContainer = self.startContainer;
+        startOffset = self.startOffset;
+        endContainer = self.endContainer;
+        endOffset = self.endOffset;
+
+        /**
          * Return an empty array when either:
-         * - startContainer or endContainer are not set;
-         * - startContainer or endContainer are not attached;
-         * - startContainer does not share a root with endContainer.
+         *
+         * - `startContainer` or `endContainer` are not
+         *   set;
+         * - `startContainer` or `endContainer` are not
+         *   attached;
+         * - `startContainer` does not share a root with
+         *   `endContainer`.
          */
-        if (!startContainer || !endContainer || !startContainer.parent ||
-            !endContainer.parent || findRoot(startContainer) !==
-            findRoot(endContainer)) {
-                return content;
+
+        if (
+            !startContainer ||
+            !endContainer ||
+            !startContainer.parent ||
+            !endContainer.parent ||
+            findRoot(startContainer) !== findRoot(endContainer)
+        ) {
+            return [];
         }
 
-        /* If startContainer equals endContainer... */
         if (startContainer === endContainer) {
-            /* Return an array containing startContainer when startContainer
-             * either:
+            /**
+             * Return an array containing `startContainer`
+             * when `startContainer` either:
+             *
              * - does not accept children;
-             * - starts and ends so range contains all its children.
+             * - is covered by `range`.
              */
-            if (!('length' in startContainer) ||
-                (startOffset === 0 && endOffset >= startContainer.length)) {
-                    return [startContainer];
+
+            if (
+                !('length' in startContainer) ||
+                (
+                    startOffset === 0 &&
+                    endOffset >= startContainer.length
+                )
+            ) {
+                return [startContainer];
             }
 
-            /* Return an array containing the children of startContainer
-             * between startOffset and endOffset. */
-            return arraySlice.call(startContainer, startOffset, endOffset);
+            /**
+             * Return an array containing the children
+             * of `startContainer` between `startOffset`
+             * and `endOffset`.
+             */
+
+            return slice.call(startContainer, startOffset, endOffset);
         }
 
-        /* If startOffset isn't `0` and startContainer accepts children... */
-        if (startOffset && ('length' in startContainer)) {
-            /* If a child exists at startOffset, let startContainer be that
-             * child. */
+        if (
+            startOffset !== 0 &&
+            'length' in startContainer
+        ) {
+            /**
+             * If a child exists at `startOffset`, let
+             * `startContainer` be that child.
+             *
+             * Otherwise, let `startContainer` be a
+             * following node of `startContainer`.
+             */
+
             if (startOffset in startContainer) {
                 startContainer = startContainer[startOffset];
-            /* Otherwise, let startContainer be a following node of
-             * startContainer. */
             } else {
-                startContainer = startContainer.next || findNextAncestor(
-                    startContainer
-                );
+                startContainer =
+                    startContainer.next || findNextAncestor(startContainer);
             }
         }
 
-        /* If the whole endNode is in the range... */
+        /**
+         * Find the highest covered ancestor of
+         * `endContainer`.
+         */
+
         if (endOffset >= endContainer.length) {
-            /* While endContainer is the last child of its parent... */
             while (endContainer.parent.tail === endContainer) {
-                /* Let endContainer be its parent. */
                 endContainer = endContainer.parent;
 
-                /* Break when the new endContainer has no parent. */
                 if (!endContainer.parent) {
                     break;
                 }
             }
         }
 
-        /* Find all ancestors of endContainer. */
+        content = [];
+
         endAncestors = findAncestors(endContainer);
 
-        /* While node is truthy... */
         node = startContainer;
 
+        /**
+         * Get all nodes between start and end.
+         */
+
         while (node) {
-            /* If node equals endContainer... */
             if (node === endContainer) {
-                /* Add endContainer to content, if either:
-                 * - endContainer does not accept children;
-                 * - ends so range contains all its children.
+                /**
+                 * Add `endContainer` to `content`, if
+                 * `endContainer` either:
+                 *
+                 * - does not accept children;
+                 * - is covered by `range`.
+                 *
+                 * Otherwise, add its children untill
+                 * `endOffset`.
                  */
-                if (!('length' in endContainer) ||
-                    endOffset >= endContainer.length) {
-                        content.push(node);
-                /* Add the children of endContainer to content from its start
-                 * until its endOffset. */
+
+                if (
+                    !('length' in endContainer) ||
+                    endOffset >= endContainer.length
+                ) {
+                    content.push(node);
                 } else {
                     content = content.concat(
-                        arraySlice.call(endContainer, 0, endOffset)
+                        slice.call(endContainer, 0, endOffset)
                     );
                 }
 
-                /* Stop iterating. */
                 break;
             }
 
-            /* If node is not an ancestor of endContainer... */
-            if (endAncestors.indexOf(node) === -1) {
-                /* Add node to content */
+            /**
+             * If `node` is an ancestor of `endContainer`,
+             * let `next` be its `head`.
+             *
+             * Otherwise, add `node` to `content` and
+             * let `next` be one of its following siblings
+             * or ancestors.
+             */
+
+            if (endAncestors.indexOf(node) !== -1) {
+                node = node.head;
+            } else {
                 content.push(node);
 
-                /* Let the next node to iterate over be either its next
-                 * sibling, or a following ancestor. */
                 node = node.next || findNextAncestor(node);
-            /* Otherwise, let the next node to iterate over be either its
-             * first child, its next sibling, or a following ancestor. */
-            } else {
-                /* Note that a `head` always exists on a parent of
-                 * `endContainer`, thus we do not check for `next`, or a next
-                 * ancestor. */
-                node = node.head;
             }
         }
 
-        /* Return content. */
         return content;
     };
 
-    retext.parser.TextOM.Range = Range;
+    /**
+     * Expose `Range` on `TextOM`.
+     */
+
+    retext.TextOM.Range = Range;
 }
 
 /**
  * Expose `attach`.
- * @memberof exports
  */
-exports.attach = attach;
+
+retextRange.attach = attach;
+
+/**
+ * Expose `retextRange`.
+ */
+
+module.exports = retextRange;
