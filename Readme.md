@@ -1,11 +1,5 @@
 # retext-range [![Build Status](https://travis-ci.org/wooorm/retext-range.svg?branch=master)](https://travis-ci.org/wooorm/retext-range) [![Coverage Status](https://img.shields.io/coveralls/wooorm/retext-range.svg)](https://coveralls.io/r/wooorm/retext-range?branch=master)
 
-[![browser support](https://ci.testling.com/wooorm/retext-range.png) ](https://ci.testling.com/wooorm/retext-range)
-
-See [Browser Support](#browser-support) for more information (a.k.a. don’t worry about those grey icons above).
-
----
-
 Ranges—similar to DOM’s [Range](http://dom.spec.whatwg.org/#introduction-to-dom-ranges)—for [retext](https://github.com/wooorm/retext "Retext"): A Range object represents a sequence of content within a TextOM tree. Each range has a start and an end (two “boundary points”—each in turn a node and an offset). In other words, a range represents a piece of content within a TextOM tree between two points.
 
 ## Installation
@@ -178,9 +172,6 @@ Removes each completely covered node inside `range`, splitting partially covered
 
 ##### TextOM\.Range#getContent()
 Returns an array containing each completely covered node inside `range`, ignores partially covered Text nodes (TextNode, SourceNode).
-
-## Browser Support
-Pretty much every browser (available through BrowserStack) runs all retext-range unit tests.
 
 ## License
 
