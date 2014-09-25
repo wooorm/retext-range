@@ -1,4 +1,23 @@
 
+n.n.n / 2014-09-25
+==================
+
+ * Remove browser test
+ * Refactor Readme.md
+ * Add chaining to set{Start,End}
+ * Refactor API
+ * Add npm deployment to travis
+ * Remove `npm update` from travis
+ * Update Installation in docs
+ * Add bower.json
+ * Fix property order in component.json, package.json
+ * Update .gitignore, .npmignore
+ * Update copyright in Readme.md
+ * Remove testling
+ * Refactor spec
+ * Update eslint, mocha, retext
+ * Fix plug-in name in docs, browser support
+
 0.1.0 / 2014-07-12
 ==================
 
