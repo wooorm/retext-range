@@ -1,0 +1,27 @@
+{
+  "name": "retext-range",
+  "main": "index.js",
+  "description": "Sequences of content within a TextOM tree between two points",
+  "license": "MIT",
+  "keywords": [
+    "retext",
+    "range"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wooorm/retext-range.git"
+  },
+  "authors": [
+    "Titus Wormer <tituswormer@gmail.com>"
+  ],
+  "ignore": [
+    ".*",
+    "*.log",
+    "*.md",
+    "component.json",
+    "package.json",
+    "coverage",
+    "node_modules",
+    "spec"
+  ]
+}
