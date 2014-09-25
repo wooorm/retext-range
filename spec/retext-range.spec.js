@@ -1,1256 +1,1807 @@
 'use strict';
 
-var retextRange, Retext, assert, TextOM, retext, Range;
+var retextRange,
+    Retext,
+    assert,
+    retext,
+    TextOM,
+    Range;
+
+/**
+ * Module dependencies.
+ */
 
 retextRange = require('..');
 Retext = require('retext');
 assert = require('assert');
 
-retext = new Retext().use(retextRange);
-TextOM = retext.parser.TextOM;
+/**
+ * Retext.
+ */
 
+retext = new Retext().use(retextRange);
+
+TextOM = retext.TextOM;
 Range = TextOM.Range;
 
-describe('retext-range', function () {
-    it('should be of type `function`', function () {
+/**
+ * Factory for multiple async operations in a test.
+ */
+
+function completeFactory(done, count) {
+    var exception;
+
+    return function (err) {
+        /* istanbul ignore if */
+        if (err) {
+            exception = err;
+        }
+
+        count--;
+
+        if (count < 1) {
+            done(exception);
+        }
+    };
+}
+
+/**
+ * Tests.
+ */
+
+describe('retext-range()', function () {
+    it('should be a `function`', function () {
         assert(typeof retextRange === 'function');
     });
 
-    it('should export an `attach` method', function () {
+    it('should have an `attach` method', function () {
         assert(typeof retextRange.attach === 'function');
     });
 });
 
-describe('retext-range.attach', function () {
+describe('retext-range.attach()', function () {
     it('should attach a `Range` constructor to `TextOM`', function () {
         assert('Range' in TextOM);
     });
 });
 
 describe('TextOM.Range()', function () {
-    it('should be of type `function`', function () {
+    it('should be a `function`', function () {
         assert(typeof Range === 'function');
     });
 });
 
 describe('TextOM.Range#setStart(node, offset?)', function () {
-    it('should be of type `function`', function () {
-        assert(typeof (new Range()).setStart === 'function');
+    it('should be a `function`', function () {
+        assert(typeof new Range().setStart === 'function');
     });
 
-    it('should throw when no node is given', function () {
-        var range = new Range();
+    it('should throw when no `node` is given', function () {
+        var range;
+
+        range = new Range();
 
         assert.throws(function () {
             range.setStart();
-        }, 'undefined');
+        }, /undefined/);
 
         assert.throws(function () {
             range.setStart(false);
-        }, 'false');
+        }, /false/);
     });
 
-    it('should NOT throw when an unattached node is given', function () {
-        var range = new Range();
+    it('should NOT throw when `node` is not attached', function () {
+        var range;
+
+        range = new Range();
 
         assert.doesNotThrow(function () {
             range.setStart(new TextOM.WordNode());
         });
     });
 
-    it('should throw when a negative offset is given', function () {
-        var wordNode = retext.parse('test').head.head.head;
+    it('should throw when `offset` is negative', function () {
+        assert.throws(function () {
+            new Range().setStart(new TextOM.WordNode(), -1);
+        }, /-1/);
 
         assert.throws(function () {
-            (new Range()).setStart(wordNode, -1);
-        }, '-1');
-
-        assert.throws(function () {
-            (new Range()).setStart(wordNode, -Infinity);
-        }, '-Infinity');
+            new Range().setStart(new TextOM.WordNode(), -Infinity);
+        }, /-Infinity/);
     });
 
-    it('should NOT throw when NaN is given, but treat it as `0`',
+    it('should NOT throw when `offset` is `NaN`', function () {
+        var range;
+
+        range = new Range();
+
+        assert.doesNotThrow(function () {
+            range.setStart(new TextOM.WordNode(), NaN);
+        });
+    });
+
+    it('should treat an `offset` of `NaN` as `0`', function () {
+        var range;
+
+        range = new Range();
+
+        range.setStart(new TextOM.WordNode(), NaN);
+
+        assert(range.startOffset === 0);
+    });
+
+    it('should throw when a `offset` is non-number', function () {
+        assert.throws(function () {
+            new Range().setStart(new TextOM.WordNode(), 'failure');
+        }, /failure/);
+    });
+
+    it('should NOT throw when `offset` is greater than `length` of ' +
+        '`node`',
+        function (done) {
+            retext.parse('One two.', function (err, tree) {
+                var node;
+
+                node = tree.head.head;
+
+                assert.doesNotThrow(function () {
+                    new Range().setStart(node, 5);
+                });
+
+                assert.doesNotThrow(function () {
+                    new Range().setStart(node, Infinity);
+                });
+
+                done(err);
+            });
+        }
+    );
+
+    it('should throw when `endContainer` does not share `node`s root',
+        function (done) {
+            var complete;
+
+            complete = completeFactory(done, 2);
+
+            retext.parse('test1', function (err, tree1) {
+                retext.parse('test2', function (err, tree2) {
+                    var range;
+
+                    range = new Range();
+
+                    range.setEnd(tree1.head.head.head);
+
+                    assert.throws(function () {
+                        range.setStart(tree2.head.head.head);
+                    }, /WrongRootError/);
+
+                    complete(err);
+                });
+
+                complete(err);
+            });
+        }
+    );
+
+    it('should NOT throw when `offset` is given, but `node` has no `length`',
         function () {
-            var range = new Range(),
-                wordNode = retext.parse('test').head.head.head;
-
             assert.doesNotThrow(function () {
-                range.setStart(wordNode, NaN);
+                new Range().setStart(new TextOM.WordNode(), 1);
             });
 
-            assert(range.startOffset === 0);
+            assert.doesNotThrow(function () {
+                new Range().setStart(new TextOM.WordNode(), Infinity);
+            });
         }
     );
 
-    it('should throw when a value other than a number is given',
+    it('should set `startContainer` and `startOffset` to the given values',
         function () {
-            var wordNode = retext.parse('test').head.head.head;
+            var range,
+                node,
+                offset;
 
-            assert.throws(function () {
-                (new Range()).setStart(wordNode, 'failure');
-            }, 'failure');
+            range = new Range();
+            node = new TextOM.WordNode();
+            offset = 1;
+
+            range.setStart(node, offset);
+
+            assert(range.startContainer === node);
+            assert(range.startOffset === offset);
         }
     );
 
-    it('should NOT throw when an offset greater than the length of the ' +
-        'node is given', function () {
-            var sentenceNode = retext.parse('test1 test2').head.head;
+    it('should switch the given values with the current end values, ' +
+        'when `endContainer` is `node` and `endOffset` is lower than ' +
+        '`offset`',
+        function () {
+            var range,
+                node;
 
-            assert.doesNotThrow(function () {
-                (new Range()).setStart(sentenceNode, 3);
-            });
+            range = new Range();
 
-            assert.doesNotThrow(function () {
-                (new Range()).setStart(sentenceNode, Infinity);
-            });
-        }
-    );
+            node = new TextOM.SentenceNode()
+                .append(new TextOM.WordNode())
+                .append(new TextOM.TextNode('test'))
+                .parent;
 
-    it('should throw when `endContainer` does not share the same root as ' +
-        'the given node', function () {
-            var range = new Range(),
-                wordNode = retext.parse('test').head.head.head,
-                wordNode1 = retext.parse('test1').head.head.head;
-
-            range.setEnd(wordNode);
-
-            assert.throws(function () {
-                range.setStart(wordNode1);
-            }, 'WrongRootError');
-        }
-    );
-
-    it('should not throw when an offset is given, but no length property ' +
-        'exists on the given node', function () {
-            var wordNode = retext.parse('test').head.head.head;
-
-            assert.doesNotThrow(function () {
-                (new Range()).setStart(wordNode, 1);
-            });
-
-            assert.doesNotThrow(function () {
-                (new Range()).setStart(wordNode, Infinity);
-            });
-        }
-    );
-
-    it('should set `startContainer` and `startOffset` to the given values, ' +
-        'when no endContainer exists', function () {
-            var range = new Range(),
-                wordNode = retext.parse('test').head.head.head;
-
-            range.setStart(wordNode, 1);
-            assert(range.startContainer === wordNode);
-            assert(range.startOffset === 1);
-        }
-    );
-
-    it('should switch the given start values with the current end values, ' +
-        'when `endContainer` equals the given container and the endOffset ' +
-        'is lower than the given offset', function () {
-            var range = new Range(),
-                wordNode = retext.parse('test').head.head.head;
-
-            range.setEnd(wordNode, 0);
-            range.setStart(wordNode, 1);
+            range.setEnd(node, 0);
+            range.setStart(node, 1);
 
             assert(range.startOffset === 0);
             assert(range.endOffset === 1);
         }
     );
 
-    it('should switch the given start values with the current end values, ' +
-        'when the given item is a descendant of the current end container',
+    it('should switch the given values with the current end values, ' +
+        'when `node` is a descendant of `endContainer`',
         function () {
-            var paragraphNode = retext.parse('test').head,
-                sentenceNode = paragraphNode.head,
-                wordNode = sentenceNode.head,
-                range;
+            var range,
+                node;
+
+            node = new TextOM.RootNode()
+                .append(new TextOM.ParagraphNode())
+                .append(new TextOM.SentenceNode())
+                .append(new TextOM.WordNode())
+                .append(new TextOM.TextNode('test'))
+                .parent;
 
             range = new Range();
+            range.setEnd(node.parent);
+            range.setStart(node);
 
-            range.setEnd(sentenceNode);
-            range.setStart(wordNode);
-            assert(range.endContainer === wordNode);
-            assert(range.startContainer === sentenceNode);
+            assert(range.endContainer === node);
+            assert(range.startContainer === node.parent);
 
             range = new Range();
+            range.setEnd(node.parent.parent);
+            range.setStart(node);
 
-            range.setEnd(paragraphNode);
-            range.setStart(wordNode);
-            assert(range.endContainer === wordNode);
-            assert(range.startContainer === paragraphNode);
+            assert(range.endContainer === node);
+            assert(range.startContainer === node.parent.parent);
         }
     );
 
-    it('should switch the given start values with the current end values, ' +
-        'when the given item is before the current end container',
-        function () {
-            var root = retext.parse(
-                    'One two. Three four.\n\nFive six. Seven eighth.'
-                ),
-                range;
+    it('should switch the given values with the current end values, ' +
+        'when the `node` is before `endContainer`',
+        function (done) {
+            retext.parse(
+                'One two. Three four.\n\nFive six. Seven eighth.',
+                function (err, tree) {
+                    var range;
 
-            range = new Range();
+                    range = new Range();
+                    range.setEnd(tree.tail.head.tail);
+                    range.setStart(tree.tail.tail.tail);
 
-            range.setEnd(root.tail.head.tail);
-            range.setStart(root.tail.tail.tail);
-            assert(range.startContainer === root.tail.head.tail);
-            assert(range.endContainer === root.tail.tail.tail);
+                    assert(range.startContainer === tree.tail.head.tail);
+                    assert(range.endContainer === tree.tail.tail.tail);
 
-            range = new Range();
+                    range = new Range();
+                    range.setEnd(tree.head.tail.tail);
+                    range.setStart(tree.tail.tail.tail);
 
-            range.setEnd(root.head.tail.tail);
-            range.setStart(root.tail.tail.tail);
-            assert(range.startContainer === root.head.tail.tail);
-            assert(range.endContainer === root.tail.tail.tail);
+                    assert(range.startContainer === tree.head.tail.tail);
+                    assert(range.endContainer === tree.tail.tail.tail);
 
-            range = new Range();
+                    range = new Range();
+                    range.setEnd(tree.head.head.tail);
+                    range.setStart(tree.tail.tail.tail);
 
-            range.setEnd(root.head.head.tail);
-            range.setStart(root.tail.tail.tail);
-            assert(range.startContainer === root.head.head.tail);
-            assert(range.endContainer === root.tail.tail.tail);
+                    assert(range.startContainer === tree.head.head.tail);
+                    assert(range.endContainer === tree.tail.tail.tail);
 
-            range = new Range();
+                    range = new Range();
+                    range.setEnd(tree.tail.tail);
+                    range.setStart(tree.tail.tail.tail);
 
-            range.setEnd(root.tail.tail);
-            range.setStart(root.tail.tail.tail);
-            assert(range.startContainer === root.tail.tail);
-            assert(range.endContainer === root.tail.tail.tail);
+                    assert(range.startContainer === tree.tail.tail);
+                    assert(range.endContainer === tree.tail.tail.tail);
 
-            range = new Range();
+                    range = new Range();
+                    range.setEnd(tree.head.tail);
+                    range.setStart(tree.tail.tail.tail);
 
-            range.setEnd(root.head.tail);
-            range.setStart(root.tail.tail.tail);
-            assert(range.startContainer === root.head.tail);
-            assert(range.endContainer === root.tail.tail.tail);
+                    assert(range.startContainer === tree.head.tail);
+                    assert(range.endContainer === tree.tail.tail.tail);
 
-            range = new Range();
+                    range = new Range();
+                    range.setEnd(tree.head);
+                    range.setStart(tree.tail.tail.tail);
 
-            range.setEnd(root.head);
-            range.setStart(root.tail.tail.tail);
-            assert(range.startContainer === root.head);
-            assert(range.endContainer === root.tail.tail.tail);
+                    assert(range.startContainer === tree.head);
+                    assert(range.endContainer === tree.tail.tail.tail);
+
+                    done(err);
+                }
+            );
         }
     );
 });
 
 describe('TextOM.Range#setEnd(node, offset?)', function () {
-    it('should be of type `function`', function () {
-        assert(typeof (new Range()).setEnd === 'function');
+    it('should be a `function`', function () {
+        assert(typeof new Range().setEnd === 'function');
     });
 
-    it('should throw when no node is given', function () {
-        var range = new Range();
+    it('should throw when no `node` is given', function () {
+        var range;
+
+        range = new Range();
 
         assert.throws(function () {
             range.setEnd();
-        }, 'undefined');
+        }, /undefined/);
 
         assert.throws(function () {
             range.setEnd(false);
-        }, 'false');
+        }, /false/);
     });
 
-    it('should NOT throw when an unattached node is given', function () {
-        var range = new Range();
+    it('should NOT throw when `node` is not attached', function () {
+        var range;
+
+        range = new Range();
 
         assert.doesNotThrow(function () {
             range.setEnd(new TextOM.WordNode());
         });
     });
 
-    it('should throw when a negative offset is given', function () {
-        var wordNode = retext.parse('test').head.head.head;
+    it('should throw when `offset` is negative', function () {
+        assert.throws(function () {
+            new Range().setEnd(new TextOM.WordNode(), -1);
+        }, /-1/);
 
         assert.throws(function () {
-            (new Range()).setEnd(wordNode, -1);
-        }, '-1');
-
-        assert.throws(function () {
-            (new Range()).setEnd(wordNode, -Infinity);
-        }, '-Infinity');
+            new Range().setEnd(new TextOM.WordNode(), -Infinity);
+        }, /-Infinity/);
     });
 
-    it('should NOT throw when NaN is given, but treat it as `Infinity`',
+    it('should NOT throw when `offset` is `NaN`', function () {
+        var range;
+
+        range = new Range();
+
+        assert.doesNotThrow(function () {
+            range.setEnd(new TextOM.WordNode(), NaN);
+        });
+    });
+
+    it('should treat an `offset` of `NaN` as `Infinity`', function () {
+        var range;
+
+        range = new Range();
+
+        range.setEnd(new TextOM.WordNode(), NaN);
+
+        assert(range.endOffset === Infinity);
+    });
+
+    it('should throw when a `offset` is non-number', function () {
+        assert.throws(function () {
+            new Range().setEnd(new TextOM.WordNode(), 'failure');
+        }, /failure/);
+    });
+
+    it('should NOT throw when `offset` is greater than `length` of ' +
+        '`node`',
+        function (done) {
+            retext.parse('One two.', function (err, tree) {
+                var node;
+
+                node = tree.head.head;
+
+                assert.doesNotThrow(function () {
+                    new Range().setEnd(node, 5);
+                });
+
+                assert.doesNotThrow(function () {
+                    new Range().setEnd(node, Infinity);
+                });
+
+                done(err);
+            });
+        }
+    );
+
+    it('should throw when `startContainer` does not share `node`s root',
+        function (done) {
+            var complete;
+
+            complete = completeFactory(done, 2);
+
+            retext.parse('test1', function (err, tree1) {
+                retext.parse('test2', function (err, tree2) {
+                    var range;
+
+                    range = new Range();
+                    range.setStart(tree1.head.head.head);
+
+                    assert.throws(function () {
+                        range.setEnd(tree2.head.head.head);
+                    }, /WrongRootError/);
+
+                    complete(err);
+                });
+
+                complete(err);
+            });
+        }
+    );
+
+    it('should NOT throw when `offset` is given, but `node` has no `length`',
         function () {
-            var range = new Range(),
-                wordNode = retext.parse('test').head.head.head;
-
             assert.doesNotThrow(function () {
-                range.setEnd(wordNode, NaN);
+                new Range().setEnd(new TextOM.WordNode(), 1);
             });
 
-            assert(range.endOffset === Infinity);
+            assert.doesNotThrow(function () {
+                new Range().setEnd(new TextOM.WordNode(), Infinity);
+            });
         }
     );
 
-    it('should throw when a value other than a number is given',
+    it('should set `endContainer` and `endOffset` to the given values',
         function () {
-            var wordNode = retext.parse('test').head.head.head;
+            var range,
+                node,
+                offset;
 
-            assert.throws(function () {
-                (new Range()).setEnd(wordNode, 'failure');
-            }, 'failure');
+            range = new Range();
+            node = new TextOM.WordNode();
+            offset = 1;
+
+            range.setEnd(node, offset);
+
+            assert(range.endContainer === node);
+            assert(range.endOffset === offset);
         }
     );
 
-    it('should NOT throw when an offset greater than the length of the ' +
-        'node is given', function () {
-            var sentenceNode = retext.parse('test1 test2').head.head;
+    it('should switch the given values with the current start values, ' +
+        'when `startContainer` is `node` and `startOffset` is higher than ' +
+        '`offset`',
+        function () {
+            var range,
+                node;
 
-            assert.doesNotThrow(function () {
-                (new Range()).setEnd(sentenceNode, 3);
-            });
+            range = new Range();
 
-            assert.doesNotThrow(function () {
-                (new Range()).setEnd(sentenceNode, Infinity);
-            });
-        }
-    );
+            node = new TextOM.SentenceNode()
+                .append(new TextOM.WordNode())
+                .append(new TextOM.TextNode('test'))
+                .parent;
 
-    it('should throw when `startContainer` does not share the same root as ' +
-        'the given node', function () {
-            var range = new Range(),
-                wordNode = retext.parse('test').head.head.head,
-                wordNode1 = retext.parse('test1').head.head.head;
-
-            range.setStart(wordNode);
-
-            assert.throws(function () {
-                range.setEnd(wordNode1);
-            }, 'WrongRootError');
-        }
-    );
-
-    it('should not throw when an offset is given, but no length property ' +
-        'exists on the given node', function () {
-            var wordNode = retext.parse('test').head.head.head;
-
-            assert.doesNotThrow(function () {
-                (new Range()).setEnd(wordNode, 1);
-            });
-
-            assert.doesNotThrow(function () {
-                (new Range()).setEnd(wordNode, Infinity);
-            });
-        }
-    );
-
-    it('should set `endContainer` and `endOffset` to the given values, ' +
-        'when no endContainer exists', function () {
-            var range = new Range(),
-                wordNode = retext.parse('test').head.head.head;
-
-            range.setEnd(wordNode, 1);
-            assert(range.endContainer === wordNode);
-            assert(range.endOffset === 1);
-        }
-    );
-
-    it('should switch the given end values with the current start values, ' +
-        'when `startContainer` equals the given container and the ' +
-        'startOffset is higher than the given offset', function () {
-            var range = new Range(),
-                wordNode = retext.parse('test').head.head.head;
-
-            range.setStart(wordNode, 1);
-            range.setEnd(wordNode, 0);
+            range.setStart(node, 1);
+            range.setEnd(node, 0);
 
             assert(range.startOffset === 0);
             assert(range.endOffset === 1);
         }
     );
 
-    it('should switch the given start values with the current end values, ' +
-        'when the given item is before the current end container',
-        function () {
-            var root = retext.parse(
-                    'One two. Three four.\n\nFive six. Seven eighth.'
-                ),
-                range;
+    it('should switch the given values with the current start values, ' +
+        'when the `node` is before `startContainer`',
+        function (done) {
+            retext.parse(
+                'One two. Three four.\n\nFive six. Seven eighth.',
+                function (err, tree) {
+                    var range;
 
-            range = new Range();
+                    range = new Range();
 
-            range.setStart(root.tail.tail.tail);
-            range.setEnd(root.tail.head.tail);
-            assert(range.startContainer === root.tail.head.tail);
-            assert(range.endContainer === root.tail.tail.tail);
+                    range.setStart(tree.tail.tail.tail);
+                    range.setEnd(tree.tail.head.tail);
+                    assert(range.startContainer === tree.tail.head.tail);
+                    assert(range.endContainer === tree.tail.tail.tail);
 
-            range = new Range();
+                    range = new Range();
 
-            range.setStart(root.tail.tail.tail);
-            range.setEnd(root.head.tail.tail);
-            assert(range.startContainer === root.head.tail.tail);
-            assert(range.endContainer === root.tail.tail.tail);
+                    range.setStart(tree.tail.tail.tail);
+                    range.setEnd(tree.head.tail.tail);
+                    assert(range.startContainer === tree.head.tail.tail);
+                    assert(range.endContainer === tree.tail.tail.tail);
 
-            range = new Range();
+                    range = new Range();
 
-            range.setStart(root.tail.tail.tail);
-            range.setEnd(root.head.head.tail);
-            assert(range.startContainer === root.head.head.tail);
-            assert(range.endContainer === root.tail.tail.tail);
+                    range.setStart(tree.tail.tail.tail);
+                    range.setEnd(tree.head.head.tail);
+                    assert(range.startContainer === tree.head.head.tail);
+                    assert(range.endContainer === tree.tail.tail.tail);
 
-            range = new Range();
+                    range = new Range();
 
-            range.setStart(root.tail.tail.tail);
-            range.setEnd(root.tail.tail);
-            assert(range.startContainer === root.tail.tail);
-            assert(range.endContainer === root.tail.tail.tail);
+                    range.setStart(tree.tail.tail.tail);
+                    range.setEnd(tree.tail.tail);
+                    assert(range.startContainer === tree.tail.tail);
+                    assert(range.endContainer === tree.tail.tail.tail);
 
-            range = new Range();
+                    range = new Range();
 
-            range.setStart(root.tail.tail.tail);
-            range.setEnd(root.head.tail);
-            assert(range.startContainer === root.head.tail);
-            assert(range.endContainer === root.tail.tail.tail);
+                    range.setStart(tree.tail.tail.tail);
+                    range.setEnd(tree.head.tail);
+                    assert(range.startContainer === tree.head.tail);
+                    assert(range.endContainer === tree.tail.tail.tail);
 
-            range = new Range();
+                    range = new Range();
 
-            range.setStart(root.tail.tail.tail);
-            range.setEnd(root.head);
-            assert(range.startContainer === root.head);
-            assert(range.endContainer === root.tail.tail.tail);
+                    range.setStart(tree.tail.tail.tail);
+                    range.setEnd(tree.head);
+                    assert(range.startContainer === tree.head);
+                    assert(range.endContainer === tree.tail.tail.tail);
+
+                    done(err);
+                }
+            );
         }
     );
 });
 
 describe('TextOM.Range#toString()', function () {
-    it('should be of type `function`', function () {
-        assert(typeof (new Range()).toString === 'function');
+    it('should be a `function`', function () {
+        assert(typeof new Range().toString === 'function');
     });
 
     it('should return an empty string when no start- or endpoints exist',
         function () {
-            var wordNode = retext.parse('alfred').head.head.head,
-                range = new Range();
+            var range;
+
+            range = new Range();
 
             assert(range.toString() === '');
 
             range = new Range();
-            range.setStart(wordNode);
+            range.setStart(new TextOM.WordNode());
+
             assert(range.toString() === '');
 
             range = new Range();
-            range.setEnd(wordNode);
+            range.setEnd(new TextOM.WordNode());
+
             assert(range.toString() === '');
         }
     );
 
-    it('should return an empty string when startContainer equals ' +
-        'endContainer and startOffset equals endOffset', function () {
-            var wordNode = retext.parse('alfred').head.head.head,
-                range = new Range();
+    it('should return an empty string when the start- and endpoints are ' +
+        'equal',
+        function () {
+            var range,
+                node;
 
-            range.setStart(wordNode, 2);
-            range.setEnd(wordNode, 2);
+            node = new TextOM.WordNode()
+                .append(new TextOM.TextNode('test'));
+
+            range = new Range();
+            range.setStart(node, 2);
+            range.setEnd(node, 2);
+
             assert(range.toString() === '');
         }
     );
 
-    it('should return the substring of the `startContainer`, starting at ' +
-        '`startOffset` and ending at `endOffset`, when `startContainer` ' +
-        'equals `endContainer` and `startContainer` has no `length` ' +
-        'property', function () {
-            var range = new Range(),
-                textNode = retext.parse('alfred').head.head.head.head;
+    it('should return the substring of `startContainer` from `startOffset` ' +
+        'to `endOffset`, when `startContainer` is `endContainer`, and ' +
+        '`startContainer` has no `length`',
+        function () {
+            var range,
+                node;
 
-            range.setStart(textNode, 2);
-            range.setEnd(textNode, 4);
+            node = new TextOM.WordNode()
+                .append(new TextOM.TextNode('Alfred'));
+
+            range = new Range();
+            range.setStart(node, 2);
+            range.setEnd(node, 4);
             assert(range.toString() === 'fr');
 
-            range.setEnd(textNode);
+            range.setEnd(node);
             assert(range.toString() === 'fred');
 
-            range.setStart(textNode);
-            assert(range.toString() === 'alfred');
+            range.setStart(node);
+            assert(range.toString() === 'Alfred');
         }
     );
 
-    it('should return the substring of the `startContainer`, starting at ' +
-        '`startOffset` and ending at the last possible character, when ' +
-        '`startContainer` equals `endContainer`, `startContainer` has no ' +
-        '`length`property, and `endOffset` is larger than the result of ' +
-        'calling the `toString` method on `startContainer`', function () {
-            var range = new Range(),
-                textNode = retext.parse('alfred').head.head.head.head;
+    it('should return the substring of `startContainer` from `startOffset`,' +
+        ' when `startContainer` is `endContainer`, `startContainer` has no ' +
+        '`length`,  and `endOffset` is larger than  the result of invoking ' +
+        '`startContainer#toString()`',
+        function () {
+            var range,
+                node;
 
-            range.setStart(textNode);
-            range.setEnd(textNode);
-            textNode.fromString('bert');
-            assert(range.toString() === 'bert');
+            node = new TextOM.WordNode()
+                .append(new TextOM.TextNode('Alfred'));
+
+            range = new Range();
+            range.setStart(node);
+            range.setEnd(node);
+            node.fromString('Bert');
+
+            assert(range.toString() === 'Bert');
         }
     );
 
-    it('should substring the endContainer from its start and ending at ' +
-        'its `endOffset`', function () {
-            var range = new Range(),
-                wordNode = retext.parse('alfred bertrand').head.head.head;
+    it('should return the substring of `endContainer` from its start to ' +
+        '`endOffset`',
+        function (done) {
+            retext.parse('Alfred Bertrand.', function (err, tree) {
+                var range,
+                    node;
 
-            range.setStart(wordNode);
-            range.setEnd(wordNode.next.next.head, 6);
-            assert(range.toString() === 'alfred bertra');
+                node = tree.head.head.head;
+
+                range = new Range();
+                range.setStart(node);
+                range.setEnd(node.next.next.head, 6);
+
+                assert(range.toString() === 'Alfred Bertra');
+
+                done(err);
+            });
         }
     );
 
-    it('should concatenate two siblings', function () {
-        var range = new Range(),
-            textNode1 = retext.parse('alfredbertrand').head.head.head.head,
-            textNode = textNode1.split(6);
+    it('should concatenate two siblings', function (done) {
+        retext.parse('Alfredbertrand', function (err, tree) {
+            var range,
+                node1,
+                node2;
 
-        range.setStart(textNode);
-        range.setEnd(textNode1);
-        assert(range.toString() === 'alfredbertrand');
+            node2 = tree.head.head.head.head;
+            node1 = node2.split(6);
 
-        range.setStart(textNode, 2);
-        assert(range.toString() === 'fredbertrand');
+            range = new Range();
+            range.setStart(node1);
+            range.setEnd(node2);
 
-        range.setEnd(textNode1, 6);
-        assert(range.toString() === 'fredbertra');
+            assert(range.toString() === 'Alfredbertrand');
+
+            range.setStart(node1, 2);
+
+            assert(range.toString() === 'fredbertrand');
+
+            range.setEnd(node2, 6);
+
+            assert(range.toString() === 'fredbertra');
+
+            done(err);
+        });
     });
 
-    it('should concatenate multiple siblings', function () {
-        var range = new Range(),
-            wordNode = retext.parse(
-                'alfredbertrandceesdick'
-            ).head.head.head;
+    it('should concatenate multiple siblings', function (done) {
+        retext.parse('Alfredbertrandceesdick', function (err, tree) {
+            var range,
+                node;
 
-        wordNode.head.split(6);
-        wordNode.tail.split(8);
-        wordNode.tail.split(4);
+            node = tree.head.head.head;
+            node.head.split(6);
+            node.tail.split(8);
+            node.tail.split(4);
 
-        range.setStart(wordNode.head);
-        range.setEnd(wordNode.tail);
-        assert(
-            range.toString() === 'alfredbertrandceesdick'
-        );
+            range = new Range();
+            range.setStart(node.head);
+            range.setEnd(node.tail);
 
-        range.setStart(wordNode.head, 3);
-        assert(range.toString() === 'redbertrandceesdick');
+            assert(range.toString() === 'Alfredbertrandceesdick');
 
-        range.setEnd(wordNode.tail, 2);
-        assert(range.toString() === 'redbertrandceesdi');
+            range.setStart(node.head, 3);
+
+            assert(range.toString() === 'redbertrandceesdick');
+
+            range.setEnd(node.tail, 2);
+
+            assert(range.toString() === 'redbertrandceesdi');
+
+            done(err);
+        });
     });
 
-    it('should concatenate children of different parents', function () {
-        var range = new Range(),
-            sentenceNode = retext.parse('Alfred bertrand').head.head;
+    it('should concatenate children of different parents', function (done) {
+        retext.parse('Alfred Bertrand', function (err, tree) {
+            var range,
+                node;
 
-        range.setStart(sentenceNode.head.head);
-        range.setEnd(sentenceNode.tail.head);
-        assert(range.toString() === 'Alfred bertrand');
+            node = tree.head.head;
 
-        range.setStart(sentenceNode.head.head, 1);
-        assert(range.toString() === 'lfred bertrand');
+            range = new Range();
+            range.setStart(node.head.head);
+            range.setEnd(node.tail.head);
 
-        range.setEnd(sentenceNode.tail.head, 5);
-        assert(range.toString() === 'lfred bertr');
+            assert(range.toString() === 'Alfred Bertrand');
+
+            range.setStart(node.head.head, 1);
+
+            assert(range.toString() === 'lfred Bertrand');
+
+            range.setEnd(node.tail.head, 5);
+
+            assert(range.toString() === 'lfred Bertr');
+
+            done(err);
+        });
     });
 
     it('should concatenate children of different grandparents',
-        function () {
-            var range = new Range(),
-                root = retext.parse('One. Two.\n\nThree. Four.');
+        function (done) {
+            retext.parse('One. Two.\n\nThree. Four.', function (err, tree) {
+                var range;
 
-            range.setStart(root.head.head.head.head);
-            range.setEnd(root.tail.tail.head.head);
-            assert(range.toString() === 'One. Two.\n\nThree. Four');
+                range = new Range();
+                range.setStart(tree.head.head.head.head);
+                range.setEnd(tree.tail.tail.head.head);
 
-            range.setStart(root.head.head.head.head, 1);
-            assert(range.toString() === 'ne. Two.\n\nThree. Four');
+                assert(range.toString() === 'One. Two.\n\nThree. Four');
 
-            range.setEnd(root.tail.tail.head.head, 2);
-            assert(range.toString() === 'ne. Two.\n\nThree. Fo');
+                range.setStart(tree.head.head.head.head, 1);
 
-            range.setStart(root.head.tail.head.head);
-            assert(range.toString() === 'Two.\n\nThree. Fo');
+                assert(range.toString() === 'ne. Two.\n\nThree. Four');
 
-            range.setEnd(root.tail.head.head.head);
-            assert(range.toString() === 'Two.\n\nThree');
+                range.setEnd(tree.tail.tail.head.head, 2);
 
-            range.setStart(root.head.tail.head.head, 1);
-            assert(range.toString() === 'wo.\n\nThree');
+                assert(range.toString() === 'ne. Two.\n\nThree. Fo');
 
-            range.setEnd(root.tail.head.head.head, 3);
-            assert(range.toString() === 'wo.\n\nThr');
+                range.setStart(tree.head.tail.head.head);
+
+                assert(range.toString() === 'Two.\n\nThree. Fo');
+
+                range.setEnd(tree.tail.head.head.head);
+
+                assert(range.toString() === 'Two.\n\nThree');
+
+                range.setStart(tree.head.tail.head.head, 1);
+
+                assert(range.toString() === 'wo.\n\nThree');
+
+                range.setEnd(tree.tail.head.head.head, 3);
+
+                assert(range.toString() === 'wo.\n\nThr');
+
+                done(err);
+            });
         }
     );
 
-    it('should return an empty string, when startContainer and ' +
-        'endContainer no longer share the same root', function () {
-            var range = new Range(),
-                sentenceNode = retext.parse('One two').head.head;
+    it('should return an empty string when `startContainer` and ' +
+        '`endContainer` no longer share a root',
+        function (done) {
+            retext.parse('One two.', function (err, tree) {
+                var range,
+                    node;
 
-            range.setStart(sentenceNode.head);
-            range.setEnd(sentenceNode.tail);
-            assert(range.toString() === 'One two');
+                node = tree.head.head;
 
-            sentenceNode.tail.remove();
-            assert(range.toString() === '');
+                range = new Range();
+                range.setStart(node.head);
+                range.setEnd(node.tail);
+
+                assert(range.toString() === 'One two.');
+
+                node.tail.remove();
+
+                assert(range.toString() === '');
+
+                done(err);
+            });
         }
     );
 
-    it('should concatenate a parent using offset', function () {
-        var range = new Range(),
-            sentenceNode = retext.parse(
-                'alfred bertrand cees dick'
-            ).head.head;
+    it('should concatenate a `Parent` using `offset`', function (done) {
+        retext.parse('Alfred Bertrand Cees Dick', function (err, tree) {
+            var range,
+                node;
 
-        range.setStart(sentenceNode, 2);
-        range.setEnd(sentenceNode, 5);
-        assert(range.toString() === 'bertrand cees');
+            node = tree.head.head;
+
+            range = new Range();
+            range.setStart(node, 2);
+            range.setEnd(node, 5);
+
+            assert(range.toString() === 'Bertrand Cees');
+
+            done(err);
+        });
     });
 
-    it('should concatenate different parents', function () {
-        var range = new Range(),
-            paragraphNode = retext.parse('Alfred. Bertrand.').head;
+    it('should concatenate parents', function (done) {
+        retext.parse('Alfred. Bertrand.', function (err, tree) {
+            var range,
+                node;
 
-        range.setStart(paragraphNode.head);
-        range.setEnd(paragraphNode.tail);
-        assert(range.toString() === 'Alfred. Bertrand.');
+            node = tree.head;
+
+            range = new Range();
+            range.setStart(node.head);
+            range.setEnd(node.tail);
+
+            assert(range.toString() === 'Alfred. Bertrand.');
+
+            done(err);
+        });
     });
 
-    it('should concatenate different grandparents', function () {
-        var range = new Range(),
-            root = retext.parse('One. Two.\n\nThree. Four.');
+    it('should concatenate grandparents', function (done) {
+        retext.parse('One. Two.\n\nThree. Four.', function (err, tree) {
+            var range;
 
-        range.setStart(root.head);
-        range.setEnd(root.tail);
-        assert(range.toString() === 'One. Two.\n\nThree. Four.');
+            range = new Range();
+            range.setStart(tree.head);
+            range.setEnd(tree.tail);
+
+            assert(range.toString() === 'One. Two.\n\nThree. Four.');
+
+            done(err);
+        });
     });
 
-    it('should concatenate different parents using offset', function () {
-        var range = new Range(),
-            paragraphNode = retext.parse('Alfred bertrand. Cees dick.').head;
+    it('should concatenate parents using offset', function (done) {
+        retext.parse('Alfred Bertrand. Cees Dick.', function (err, tree) {
+            var range,
+                node;
 
-        range.setStart(paragraphNode.head, 2);
-        range.setEnd(paragraphNode.tail, 3);
-        assert(range.toString() === 'bertrand. Cees dick');
+            node = tree.head;
+
+            range = new Range();
+            range.setStart(node.head, 2);
+            range.setEnd(node.tail, 3);
+
+            assert(range.toString() === 'Bertrand. Cees Dick');
+
+            done(err);
+        });
     });
 });
 
 describe('TextOM.Range#removeContent()', function () {
-    it('should be of type `function`', function () {
-        assert(typeof (new Range()).removeContent === 'function');
+    it('should be a `function`', function () {
+        assert(typeof new Range().removeContent === 'function');
     });
 
     it('should return an empty array when no start- or endpoints exist',
-        function () {
-            var range = new Range();
+        function (done) {
+            retext.parse('Alfred', function (err, tree) {
+                var range;
 
-            assert(range.removeContent().length === 0);
+                range = new Range();
 
-            range = new Range();
-            range.setStart(retext.parse('Alfred').head.head.head);
-            assert(range.removeContent().length === 0);
+                assert(range.removeContent().length === 0);
 
-            range = new Range();
-            range.setEnd(retext.parse('Alfred').head.head.head);
-            assert(range.removeContent().length === 0);
+                range.setStart(tree.head.head.head);
+
+                assert(range.removeContent().length === 0);
+
+                range = new Range();
+                range.setEnd(tree.head.head.head);
+
+                assert(range.removeContent().length === 0);
+
+                done(err);
+            });
         }
     );
 
-    it('should return an empty array when startContainer equals ' +
-        'endContainer and startOffset equals endOffset', function () {
-            var range = new Range(),
-                wordNode = retext.parse('Alfred').head.head.head;
+    it('should return an empty array when the start- and endpoints are equal',
+        function (done) {
+            retext.parse('Alfred', function (err, tree) {
+                var range,
+                    node;
 
-            range.setStart(wordNode.head, 2);
-            range.setEnd(wordNode.head, 2);
-            assert(range.removeContent().length === 0);
-            assert(wordNode.toString() === 'Alfred');
-            assert(wordNode.length === 1);
+                node = tree.head.head.head;
+
+                range = new Range();
+                range.setStart(node.head, 2);
+                range.setEnd(node.head, 2);
+
+                assert(range.removeContent().length === 0);
+
+                done(err);
+            });
         }
     );
 
-    it('should remove the substring of the `startContainer`, from ' +
-        '`startOffset` to `endOffset`, when `startContainer` ' +
-        'equals `endContainer` and `startContainer` is a Text node',
-        function () {
-            var range = new Range(),
-                sentenceNode = retext.parse('Alfred').head.head;
+    it('should remove the substring of `startContainer` from `startOffset` ' +
+        'to `endOffset`, when `startContainer` is `endContainer` and ' +
+        '`startContainer` is `Text`',
+        function (done) {
+            var complete;
 
-            range.setStart(sentenceNode.head.head, 2);
-            range.setEnd(sentenceNode.head.head, 4);
+            complete = completeFactory(done, 3);
 
-            assert(range.removeContent().toString() === 'fr');
-            assert(sentenceNode.toString() === 'Aled');
-            assert(sentenceNode.head.length === 2);
+            retext.parse('Alfred', function (err, tree) {
+                var range,
+                    node;
 
-            range = new Range();
-            sentenceNode = retext.parse('Alfred').head.head;
-            range.setStart(sentenceNode.head.head, 2);
-            range.setEnd(sentenceNode.head.head);
-            assert(range.removeContent().toString() === 'fred');
-            assert(sentenceNode.toString() === 'Al');
-            assert(sentenceNode.head.length === 1);
+                node = tree.head.head;
 
-            range = new Range();
-            sentenceNode = retext.parse('Alfred').head.head;
-            range.setStart(sentenceNode.head);
-            range.setEnd(sentenceNode.head);
-            assert(range.removeContent().toString() === 'Alfred');
-            assert(sentenceNode.length === 0);
+                range = new Range();
+                range.setStart(node.head.head, 2);
+                range.setEnd(node.head.head, 4);
+
+                assert(range.removeContent().toString() === 'fr');
+                assert(node.toString() === 'Aled');
+                assert(node.head.length === 2);
+
+                complete(err);
+            });
+
+            retext.parse('Alfred', function (err, tree) {
+                var range,
+                    node;
+
+                node = tree.head.head;
+
+                range = new Range();
+                range.setStart(node.head.head, 2);
+                range.setEnd(node.head.head);
+
+                assert(range.removeContent().toString() === 'fred');
+                assert(node.toString() === 'Al');
+                assert(node.head.length === 1);
+
+                complete(err);
+            });
+
+            retext.parse('Alfred', function (err, tree) {
+                var range,
+                    node;
+
+                node = tree.head.head;
+
+                range = new Range();
+                range.setStart(node.head);
+                range.setEnd(node.head);
+
+                assert(range.removeContent().toString() === 'Alfred');
+                assert(node.length === 0);
+
+                complete(err);
+            });
         }
     );
 
-    it('should remove the substring of the `startContainer`, from ' +
-        '`startOffset` to the last possible character, when ' +
-        '`startContainer` equals `endContainer`, `startContainer` is a Text' +
-        'Node, and `endOffset` is larger than the length of ' +
-        '`startContainer`', function () {
-            var range = new Range(),
-                wordNode = retext.parse('Alfred').head.head.head,
-                textNode = wordNode.head;
+    it('should remove the substring of `startContainer` from `startOffset`,' +
+        ' when `startContainer` equals `endContainer`, `startContainer` is ' +
+        '`Text`, and `endOffset` is larger than the length of ' +
+        '`startContainer`',
+        function (done) {
+            retext.parse('Alfred', function (err, tree) {
+                var range,
+                    node,
+                    textNode;
 
-            range.setStart(textNode);
-            range.setEnd(textNode);
-            textNode.fromString('Bert');
-            assert(range.removeContent().toString() === 'Bert');
-            assert(wordNode.length === 0);
+                node = tree.head.head.head;
+                textNode = node.head;
+
+                range = new Range();
+                range.setStart(textNode);
+                range.setEnd(textNode);
+
+                textNode.fromString('Bert');
+
+                assert(range.removeContent().toString() === 'Bert');
+                assert(node.length === 0);
+
+                done(err);
+            });
         }
     );
 
-    it('should remove the substring of the `startContainer`, when ' +
-        '`startContainer` equals `endContainer`, from its start to ' +
-        '`endOffset`', function () {
-            var range = new Range(),
-                sentenceNode = retext.parse('Alfred').head.head,
-                wordNode = sentenceNode.head;
+    it('should remove the substring of `startContainer` from its start to ' +
+        '`endOffset`, when `startContainer` is `endContainer`',
+        function (done) {
+            retext.parse('Alfred', function (err, tree) {
+                var range,
+                    node;
 
-            range.setStart(wordNode.head);
-            range.setEnd(wordNode.head, 4);
-            assert(range.removeContent().toString() === 'Alfr');
-            assert(sentenceNode.toString() === 'ed');
-            assert(sentenceNode.length === 1);
+                node = tree.head.head.head;
+
+                range = new Range();
+                range.setStart(node.head);
+                range.setEnd(node.head, 4);
+
+                assert(range.removeContent().toString() === 'Alfr');
+                assert(tree.head.head.toString() === 'ed');
+                assert(tree.head.head.length === 1);
+
+                done(err);
+            });
         }
     );
 
     it('should remove the substring of `endContainer`, from its start to ' +
-        '`endOffset`', function () {
-            var range = new Range(),
-                sentenceNode = retext.parse('Alfred').head.head,
-                wordNode = sentenceNode.head,
-                wordNode1 = wordNode.after(new TextOM.WordNode());
+        '`endOffset`',
+        function (done) {
+            retext.parse('Alfred', function (err, tree) {
+                var range,
+                    node1,
+                    node2;
 
-            wordNode1.append(new TextOM.TextNode('bertrand'));
+                node1 = tree.head.head.head;
+                node2 = node1.after(new TextOM.WordNode());
 
-            range.setStart(wordNode.head);
-            range.setEnd(wordNode1.head, 6);
-            assert(range.removeContent().toString() === 'Alfred,bertra');
-            assert(sentenceNode.toString() === 'nd');
-            assert(sentenceNode.tail.length === 1);
+                node2.append(new TextOM.TextNode('Bertrand'));
+
+                range = new Range();
+                range.setStart(node1.head);
+                range.setEnd(node2.head, 6);
+
+                assert(range.removeContent().toString() === 'Alfred,Bertra');
+                assert(tree.head.head.toString() === 'nd');
+                assert(tree.head.head.tail.length === 1);
+
+                done(err);
+            });
         }
     );
 
-    it('should remove two siblings', function () {
-        var range = new Range(),
-            wordNode = retext.parse('Alfredbertrand').head.head.head,
-            textNode1 = wordNode.head,
-            textNode = textNode1.split(6);
+    it('should remove two siblings', function (done) {
+        retext.parse('AlfredBertrand', function (err, tree) {
+            var range,
+                node,
+                textNode2,
+                textNode1;
 
-        range.setStart(textNode);
-        range.setEnd(textNode1);
-        assert(range.removeContent().toString() === 'Alfred,bertrand');
-        assert(wordNode.length === 0);
+            node = tree.head.head.head;
+            textNode2 = node.head;
+            textNode1 = textNode2.split(6);
 
-        range = new Range();
-        wordNode.append(textNode);
-        wordNode.append(textNode1);
-        range.setStart(textNode, 2);
-        range.setEnd(textNode1);
-        assert(range.removeContent().toString() === 'fred,bertrand');
-        assert(wordNode.toString() === 'Al');
-        assert(wordNode.length === 1);
+            range = new Range();
+            range.setStart(textNode1);
+            range.setEnd(textNode2);
+            assert(range.removeContent().toString() === 'Alfred,Bertrand');
+            assert(node.length === 0);
 
-        range = new Range();
-        wordNode.head.remove(); // Remove 'Al'
-        textNode.fromString('Alfred');
-        wordNode.append(textNode);
-        wordNode.append(textNode1);
-        range.setStart(textNode, 2);
-        range.setEnd(textNode1, 6);
-        assert(range.removeContent().toString() === 'fred,bertra');
-        assert(wordNode.toString() === 'Alnd');
-        assert(wordNode.length === 2);
+            range = new Range();
+            node.append(textNode1);
+            node.append(textNode2);
+            range.setStart(textNode1, 2);
+            range.setEnd(textNode2);
+
+            assert(range.removeContent().toString() === 'fred,Bertrand');
+            assert(node.toString() === 'Al');
+            assert(node.length === 1);
+
+            range = new Range();
+            node.head.remove(); // Remove 'Al'
+            textNode1.fromString('Alfred');
+            node.append(textNode1);
+            node.append(textNode2);
+            range.setStart(textNode1, 2);
+            range.setEnd(textNode2, 6);
+
+            assert(range.removeContent().toString() === 'fred,Bertra');
+            assert(node.toString() === 'Alnd');
+            assert(node.length === 2);
+
+            done(err);
+        });
     });
 
-    it('should remove multiple siblings', function () {
-        var range = new Range(),
-            sentenceNode = retext.parse(
-                'Alfred bertrand cees dick eric ferdinand'
-            ).head.head;
+    it('should remove multiple siblings', function (done) {
+        var complete;
 
-        range.setStart(sentenceNode.head);
-        range.setEnd(sentenceNode.tail);
+        complete = completeFactory(done, 3);
 
-        assert(
-            range.removeContent().toString() ===
-            'Alfred, ,bertrand, ,cees, ,dick, ,eric, ,ferdinand'
+        retext.parse(
+            'Alfred Bertrand Cees Dick Eric Ferdinand',
+            function (err, tree) {
+                var range,
+                    node;
+
+                node = tree.head.head;
+
+                range = new Range();
+                range.setStart(node.head);
+                range.setEnd(node.tail);
+
+                assert(
+                    range.removeContent().toString() ===
+                    'Alfred, ,Bertrand, ,Cees, ,Dick, ,Eric, ,Ferdinand'
+                );
+                assert(node.length === 0);
+
+                complete(err);
+            }
         );
-        assert(sentenceNode.length === 0);
 
-        range = new Range();
-        sentenceNode = retext.parse(
-            'Alfred bertrand cees dick eric ferdinand'
-        ).head.head;
-        range.setStart(sentenceNode.head.head, 3);
-        range.setEnd(sentenceNode.tail.head);
+        retext.parse(
+            'Alfred Bertrand Cees Dick Eric Ferdinand',
+            function (err, tree) {
+                var range,
+                    node;
 
-        assert(
-            range.removeContent().toString() ===
-            'red, ,bertrand, ,cees, ,dick, ,eric, ,ferdinand'
+                node = tree.head.head;
+
+                range = new Range();
+                range.setStart(node.head.head, 3);
+                range.setEnd(node.tail.head);
+
+                assert(
+                    range.removeContent().toString() ===
+                    'red, ,Bertrand, ,Cees, ,Dick, ,Eric, ,Ferdinand'
+                );
+                assert(node.toString() === 'Alf');
+                assert(node.length === 2);
+
+                complete(err);
+            }
         );
-        assert(sentenceNode.toString() === 'Alf');
-        assert(sentenceNode.length === 2);
 
-        range = new Range();
-        sentenceNode = retext.parse(
-            'Alfred bertrand cees dick eric ferdinand'
-        ).head.head;
-        range.setStart(sentenceNode.head.head, 3);
-        range.setEnd(sentenceNode.tail.head, 7);
+        retext.parse(
+            'Alfred Bertrand Cees Dick Eric Ferdinand',
+            function (err, tree) {
+                var range,
+                    node;
 
-        assert(
-            range.removeContent().toString() ===
-            'red, ,bertrand, ,cees, ,dick, ,eric, ,ferdina'
+                node = tree.head.head;
+
+                range = new Range();
+                range.setStart(node.head.head, 3);
+                range.setEnd(node.tail.head, 7);
+
+                assert(
+                    range.removeContent().toString() ===
+                    'red, ,Bertrand, ,Cees, ,Dick, ,Eric, ,Ferdina'
+                );
+                assert(node.toString() === 'Alfnd');
+                assert(node.length === 2);
+
+                complete(err);
+            }
         );
-        assert(sentenceNode.toString() === 'Alfnd');
-        assert(sentenceNode.length === 2);
     });
 
-    it('should remove children of different parents', function () {
-        var range = new Range(),
-            paragraphNode = retext.parse('Alfred. Bertrand.').head;
+    it('should remove children of different parents', function (done) {
+        var complete;
 
-        range.setStart(paragraphNode.head.head.head);
-        range.setEnd(paragraphNode.tail.tail.head);
+        complete = completeFactory(done, 3);
 
-        assert(range.removeContent().toString() === 'Alfred,., ,Bertrand,.');
-        assert(paragraphNode.head.head.length === 0);
-        assert(paragraphNode.tail.head.length === 0);
+        retext.parse('Alfred. Bertrand.', function (err, tree) {
+            var range,
+                node;
 
-        range = new Range();
-        paragraphNode = retext.parse('Alfred. Bertrand.').head;
-        range.setStart(paragraphNode.head.head.head, 1);
-        range.setEnd(paragraphNode.tail.tail.head);
-        assert(range.removeContent().toString() === 'lfred,., ,Bertrand,.');
-        assert(paragraphNode.head.head.length === 1);
-        assert(paragraphNode.head.toString() === 'A');
-        assert(paragraphNode.tail.head.length === 0);
+            node = tree.head;
 
-        range = new Range();
-        paragraphNode = retext.parse('Alfred. Bertrand.').head;
-        range.setStart(paragraphNode.head.head.head);
-        range.setEnd(paragraphNode.tail.head.head, 3);
-        assert(range.removeContent().toString() === 'Alfred,., ,Ber');
-        assert(paragraphNode.head.head.length === 0);
-        assert(paragraphNode.tail.length === 2);
-        assert(paragraphNode.tail.toString() === 'trand.');
+            range = new Range();
+            range.setStart(node.head.head.head);
+            range.setEnd(node.tail.tail.head);
+
+            assert(
+                range.removeContent().toString() === 'Alfred,., ,Bertrand,.'
+            );
+            assert(node.head.head.length === 0);
+            assert(node.tail.head.length === 0);
+
+            complete(err);
+        });
+
+        retext.parse('Alfred. Bertrand.', function (err, tree) {
+            var range,
+                node;
+
+            node = tree.head;
+
+            range = new Range();
+            range.setStart(node.head.head.head, 1);
+            range.setEnd(node.tail.tail.head);
+
+            assert(
+                range.removeContent().toString() === 'lfred,., ,Bertrand,.'
+            );
+            assert(node.head.head.length === 1);
+            assert(node.head.toString() === 'A');
+            assert(node.tail.head.length === 0);
+
+            complete(err);
+        });
+
+        retext.parse('Alfred. Bertrand.', function (err, tree) {
+            var range,
+                node;
+
+            node = tree.head;
+
+            range = new Range();
+            range.setStart(node.head.head.head);
+            range.setEnd(node.tail.head.head, 3);
+
+            assert(range.removeContent().toString() === 'Alfred,., ,Ber');
+            assert(node.head.head.length === 0);
+            assert(node.tail.length === 2);
+            assert(node.tail.toString() === 'trand.');
+
+            complete(err);
+        });
     });
 
-    it('should concatenate children of different grandparents', function () {
-        var range = new Range(),
-            root = retext.parse('Alfred. Bertrand.\n\nCees. Dick.');
+    it('should concatenate children of different grandparents',
+        function (done) {
+            var complete;
 
-        range.setStart(root.head.head.head.head);
-        range.setEnd(root.tail.tail.tail.head);
+            complete = completeFactory(done, 4);
 
-        assert(
-            range.removeContent().toString() ===
-            'Alfred,., ,Bertrand.,\n\n,Cees., ,Dick,.'
-        );
-        assert(root.head.length === 1);
-        assert(root.head.head.head.length === 0);
-        assert(root.tail.length === 1);
-        assert(root.tail.head.head.length === 0);
+            retext.parse('Alfred. Bertrand.\n\nCees. Dick.',
+                function (err, tree) {
+                    var range;
 
-        range = new Range();
-        root = retext.parse('Alfred. Bertrand.\n\nCees. Dick.');
-        range.setStart(root.head.head.head.head, 2);
-        range.setEnd(root.tail.tail.tail.head);
+                    range = new Range();
+                    range.setStart(tree.head.head.head.head);
+                    range.setEnd(tree.tail.tail.tail.head);
 
-        assert(
-            range.removeContent().toString() ===
-            'fred,., ,Bertrand.,\n\n,Cees., ,Dick,.'
-        );
-        assert(root.head.head.length === 1);
-        assert(root.head.head.head.length === 1);
-        assert(root.head.head.head.toString() === 'Al');
-        assert(root.tail.head.length === 1);
-        assert(root.tail.head.head.length === 0);
+                    assert(
+                        range.removeContent().toString() ===
+                        'Alfred,., ,Bertrand.,\n\n,Cees., ,Dick,.'
+                    );
+                    assert(tree.head.length === 1);
+                    assert(tree.head.head.head.length === 0);
+                    assert(tree.tail.length === 1);
+                    assert(tree.tail.head.head.length === 0);
 
-        range = new Range();
-        root = retext.parse('Alfred. Bertrand.\n\nCees. Dick.');
-        range.setStart(root.head.tail.head.head);
-        range.setEnd(root.tail.tail.head.head, 3);
+                    complete(err);
+                }
+            );
 
-        assert(
-            range.removeContent().toString() ===
-            'Bertrand,.,\n\n,Cees., ,Dic'
-        );
+            retext.parse('Alfred. Bertrand.\n\nCees. Dick.',
+                function (err, tree) {
+                    var range;
 
-        assert(root.head.length === 3);
-        assert(root.head.toString() === 'Alfred. ');
-        assert(root.head.head.length === 2);
-        assert(root.head.head.toString() === 'Alfred.');
-        assert(root.tail.length === 1);
-        assert(root.tail.head.length === 2);
-        assert(root.tail.head.toString() === 'k.');
+                    range = new Range();
+                    range.setStart(tree.head.head.head.head, 2);
+                    range.setEnd(tree.tail.tail.tail.head);
 
-        range = new Range();
-        root = retext.parse('Alfred. Bertrand.\n\nCees. Dick.');
-        range.setStart(root.head.head.head.head, 3);
-        range.setEnd(root.tail.tail.head.head, 3);
+                    assert(
+                        range.removeContent().toString() ===
+                        'fred,., ,Bertrand.,\n\n,Cees., ,Dick,.'
+                    );
+                    assert(tree.head.head.length === 1);
+                    assert(tree.head.head.head.length === 1);
+                    assert(tree.head.head.head.toString() === 'Al');
+                    assert(tree.tail.head.length === 1);
+                    assert(tree.tail.head.head.length === 0);
 
-        assert(
-            range.removeContent().toString() ===
-            'red,., ,Bertrand.,\n\n,Cees., ,Dic'
-        );
+                    complete(err);
+                }
+            );
 
-        assert(root.head.length === 1);
-        assert(root.tail.length === 1);
-        assert(root.head.head.length === 1);
-        assert(root.head.head.toString() === 'Alf');
-        assert(root.tail.head.length === 2);
-        assert(root.tail.head.toString() === 'k.');
-    });
+            retext.parse('Alfred. Bertrand.\n\nCees. Dick.',
+                function (err, tree) {
+                    var range;
 
-    it('should *not* remove anything, when `startContainer` and ' +
-        '`endContainer` no longer share the same root', function () {
-            var range = new Range(),
-                wordNode = retext.parse('Alfred').head.head.head,
-                wordNode1 = wordNode.after(new TextOM.WordNode('bertrand'));
+                    range = new Range();
+                    range.setStart(tree.head.tail.head.head);
+                    range.setEnd(tree.tail.tail.head.head, 3);
 
-            range.setStart(wordNode);
-            range.setEnd(wordNode1);
+                    assert(
+                        range.removeContent().toString() ===
+                        'Bertrand,.,\n\n,Cees., ,Dic'
+                    );
 
-            wordNode1.remove();
+                    assert(tree.head.length === 3);
+                    assert(tree.head.toString() === 'Alfred. ');
+                    assert(tree.head.head.length === 2);
+                    assert(tree.head.head.toString() === 'Alfred.');
+                    assert(tree.tail.length === 1);
+                    assert(tree.tail.head.length === 2);
+                    assert(tree.tail.head.toString() === 'k.');
 
-            assert(range.removeContent().length === 0);
-            assert(wordNode.parent.length === 1);
-            assert(wordNode.parent.toString() === 'Alfred');
+                    complete(err);
+                }
+            );
+
+            retext.parse('Alfred. Bertrand.\n\nCees. Dick.',
+                function (err, tree) {
+                    var range;
+
+                    range = new Range();
+                    range.setStart(tree.head.head.head.head, 3);
+                    range.setEnd(tree.tail.tail.head.head, 3);
+
+                    assert(
+                        range.removeContent().toString() ===
+                        'red,., ,Bertrand.,\n\n,Cees., ,Dic'
+                    );
+
+                    assert(tree.head.length === 1);
+                    assert(tree.tail.length === 1);
+                    assert(tree.head.head.length === 1);
+                    assert(tree.head.head.toString() === 'Alf');
+                    assert(tree.tail.head.length === 2);
+                    assert(tree.tail.head.toString() === 'k.');
+
+                    complete(err);
+                }
+            );
+        }
+    );
+
+    it('should NOT remove anything when `startContainer` and `endContainer`' +
+        ' no longer share the same root',
+        function (done) {
+            retext.parse('Alfred', function (err, tree) {
+                var range,
+                    node1,
+                    node2;
+
+                node1 = tree.head.head.head;
+                node2 = node1.after(new TextOM.WordNode());
+                node2.append(new TextOM.TextNode('Bertrand'));
+
+                range = new Range();
+                range.setStart(node1);
+                range.setEnd(node2);
+
+                node2.remove();
+
+                assert(range.removeContent().length === 0);
+                assert(node1.parent.length === 1);
+                assert(node1.parent.toString() === 'Alfred');
+
+                done(err);
+            });
         }
     );
 });
 
 describe('TextOM.Range#getContent()', function () {
-    it('should be of type `function`', function () {
-        assert(typeof (new Range()).getContent === 'function');
+    it('should be a `function`', function () {
+        assert(typeof new Range().getContent === 'function');
     });
 
     it('should return an empty array, when no start- or endpoints exist',
-        function () {
-            var range = new Range();
+        function (done) {
+            retext.parse('Alfred', function (err, tree) {
+                var range;
 
-            assert(range.getContent().length === 0);
+                range = new Range();
 
-            range = new Range();
-            range.setStart(retext.parse('Alfred').head.head.head);
-            assert(range.getContent().length === 0);
+                assert(range.getContent().length === 0);
 
-            range = new Range();
-            range.setEnd(retext.parse('Alfred').head.head.head);
-            assert(range.getContent().length === 0);
+                range.setStart(tree.head.head.head);
+
+                assert(range.getContent().length === 0);
+
+                range = new Range();
+                range.setEnd(tree.head.head.head);
+
+                assert(range.getContent().length === 0);
+
+                done(err);
+            });
         }
     );
 
-    it('should return an array containging `startContainer` when ' +
-        '`startContainer` equals `endContainer`', function () {
-            var range = new Range(),
-                wordNode = retext.parse('Alfred').head.head.head;
+    it('should return an array containing `startContainer` when ' +
+        '`startContainer` is `endContainer`',
+        function (done) {
+            retext.parse('Alfred', function (err, tree) {
+                var range,
+                    node;
 
-            range.setStart(wordNode.head, 2);
-            range.setEnd(wordNode.head, 2);
-            assert(range.getContent().length === 1);
-            assert(range.getContent()[0] === wordNode.head);
+                node = tree.head.head.head;
+
+                range = new Range();
+                range.setStart(node.head, 2);
+                range.setEnd(node.head, 2);
+
+                assert(range.getContent().length === 1);
+                assert(range.getContent()[0] === node.head);
+
+                done(err);
+            });
         }
     );
 
-    it('should return an empty array, when startContainer is not in the ' +
-        'same root as endContainer', function () {
-            var range = new Range(),
-                wordNode = retext.parse('Alfred').head.head.head,
-                wordNode1 = wordNode.after(new TextOM.WordNode('bertrand'));
+    it('should return an empty array when `startContainer` and ' +
+        '`endContainer` no longer share a root',
+        function (done) {
+            retext.parse('Alfred', function (err, tree) {
+                var range,
+                    node;
 
-            range.setStart(wordNode);
-            range.setEnd(wordNode1);
+                node = tree.head.head;
+                node
+                    .append(new TextOM.WordNode())
+                    .append(new TextOM.TextNode('Bertrand'));
 
-            wordNode1.remove();
+                range = new Range();
+                range.setStart(node.head);
+                range.setEnd(node.tail);
 
-            assert(range.getContent().length === 0);
+                node.tail.remove();
+
+                assert(range.getContent().length === 0);
+
+                done(err);
+            });
         }
     );
 
     it('should return an array containing two direct siblings',
-        function () {
-            var range = new Range(),
-                textNode1 = retext.parse('Alfredbert').head.head.head.head,
-                textNode = textNode1.split(6),
-                result;
+        function (done) {
+            retext.parse('Alfredbert', function (err, tree) {
+                var range,
+                    textNode2,
+                    textNode1,
+                    result;
 
-            range.setStart(textNode);
-            range.setEnd(textNode1);
-            result = range.getContent();
-            assert(result.length === 2);
-            assert(result[0] === textNode);
-            assert(result[1] === textNode1);
+                textNode2 = tree.head.head.head.head;
+                textNode1 = textNode2.split(6);
+
+                range = new Range();
+                range.setStart(textNode1);
+                range.setEnd(textNode2);
+                result = range.getContent();
+
+                assert(result.length === 2);
+                assert(result[0] === textNode1);
+                assert(result[1] === textNode2);
+
+                done(err);
+            });
         }
     );
 
     it('should return an array containing multiple siblings',
-        function () {
-            var range = new Range(),
-                sentenceNode = retext.parse(
-                    'Alfred bertrand cees dick eric ferdinand.'
-                ).head.head,
-                result;
+        function (done) {
+            retext.parse(
+                'Alfred bertrand cees dick eric ferdinand.',
+                function (err, tree) {
+                    var range,
+                        node,
+                        result;
 
-            range.setStart(sentenceNode.head);
-            range.setEnd(sentenceNode.tail);
-            result = range.getContent();
-            assert(result.length === 12);
-            assert(
-                result.join() ===
-                'Alfred, ,bertrand, ,cees, ,dick, ,eric, ,ferdinand,.'
-            );
+                    node = tree.head.head;
 
-            range.setStart(sentenceNode.head.head, 3);
-            result = range.getContent();
-            assert(result.length === 12);
-            assert(
-                result.join() ===
-                'Alfred, ,bertrand, ,cees, ,dick, ,eric, ,ferdinand,.'
-            );
+                    range = new Range();
+                    range.setStart(node.head);
+                    range.setEnd(node.tail);
+                    result = range.getContent();
 
-            range.setEnd(sentenceNode.tail, 7);
-            result = range.getContent();
-            assert(result.length === 12);
-            assert(
-                result.join() ===
-                'Alfred, ,bertrand, ,cees, ,dick, ,eric, ,ferdinand,.'
+                    assert(result.length === 12);
+                    assert(
+                        result.join() ===
+                        'Alfred, ,bertrand, ,cees, ,dick, ,eric, ,ferdinand,.'
+                    );
+
+                    range.setStart(node.head.head, 3);
+                    result = range.getContent();
+
+                    assert(result.length === 12);
+                    assert(
+                        result.join() ===
+                        'Alfred, ,bertrand, ,cees, ,dick, ,eric, ,ferdinand,.'
+                    );
+
+                    range.setEnd(node.tail, 7);
+                    result = range.getContent();
+
+                    assert(result.length === 12);
+                    assert(
+                        result.join() ===
+                        'Alfred, ,bertrand, ,cees, ,dick, ,eric, ,ferdinand,.'
+                    );
+
+                    done(err);
+                }
             );
         }
     );
 
     it('should return an array containing text children of different parents',
-        function () {
-            var range = new Range(),
-                sentenceNode = retext.parse('Alfred bertrand.').head.head,
-                result;
+        function (done) {
+            retext.parse('Alfred bertrand.', function (err, tree) {
+                var range,
+                    node,
+                    result;
 
-            range.setStart(sentenceNode.head.head);
-            range.setEnd(sentenceNode.tail.head);
-            result = range.getContent();
-            assert(result.toString() === 'Alfred, ,bertrand,.');
-            assert(result.length === 4);
+                node = tree.head.head;
+
+                range = new Range();
+                range.setStart(node.head.head);
+                range.setEnd(node.tail.head);
+                result = range.getContent();
+
+                assert(result.toString() === 'Alfred, ,bertrand,.');
+                assert(result.length === 4);
+
+                done(err);
+            });
         }
     );
 
     it('should return an array containing children of different ' +
-        'grandparents', function () {
-            var range = new Range(),
-                root = retext.parse('Alfred.\n\nBertrand.'),
-                result;
+        'grandparents',
+        function (done) {
+            retext.parse('Alfred.\n\nBertrand.', function (err, tree) {
+                var range,
+                    result;
 
-            range.setStart(root.head.head.head.head);
-            range.setEnd(root.tail.head.tail.head);
-            result = range.getContent();
-            assert(result.toString() === 'Alfred,.,\n\n,Bertrand,.');
-            assert(result.length === 5);
+                range = new Range();
+                range.setStart(tree.head.head.head.head);
+                range.setEnd(tree.tail.head.tail.head);
+                result = range.getContent();
+
+                assert(result.toString() === 'Alfred,.,\n\n,Bertrand,.');
+                assert(result.length === 5);
+
+                done(err);
+            });
         }
     );
 
-    it('should return an array containing startContainer, when ' +
-        'startContainer equals endContaineris an Element node, ' +
-        'and the offsets cover the whole node', function () {
-            var range = new Range(),
-                sentenceNode = retext.parse('Alfred bertrand.').head.head,
-                result;
+    it('should return an array containing `startContainer`, when ' +
+        '`startContainer` is `endContainer`, is an `Element`, and  the ' +
+        '`offset`s cover the node',
+        function (done) {
+            retext.parse('Alfred bertrand.', function (err, tree) {
+                var range,
+                    node,
+                    result;
 
-            range.setStart(sentenceNode);
-            range.setEnd(sentenceNode);
-            result = range.getContent();
+                node = tree.head.head;
 
-            assert(result.length === 1);
-            assert(result[0] === sentenceNode);
+                range = new Range();
+                range.setStart(node);
+                range.setEnd(node);
+                result = range.getContent();
+
+                assert(result.length === 1);
+                assert(result[0] === node);
+
+                done(err);
+            });
         }
     );
 
     it('should return an array containing two direct element siblings',
-        function () {
-            var range = new Range(),
-                paragraphNode = retext.parse('Alfred. Bertrand.').head,
-                result;
+        function (done) {
+            retext.parse('Alfred. Bertrand.', function (err, tree) {
+                var range,
+                    node,
+                    result;
 
-            range.setStart(paragraphNode.head);
-            range.setEnd(paragraphNode.tail);
+                node = tree.head;
 
-            result = range.getContent();
-            assert(result.length === 3);
-            assert(result[0] === paragraphNode.head);
-            assert(result[1] === paragraphNode.head.next);
-            assert(result[2] === paragraphNode.tail);
+                range = new Range();
+                range.setStart(node.head);
+                range.setEnd(node.tail);
+                result = range.getContent();
+
+                assert(result.length === 3);
+                assert(result[0] === node.head);
+                assert(result[1] === node.head.next);
+                assert(result[2] === node.tail);
+
+                done(err);
+            });
         }
     );
 
     it('should return an array containing multiple element siblings',
-        function () {
-            var range = new Range(),
-                paragraphNode = retext.parse(
-                    'Alfred. Bertrand. Cees. Dick. Eric.'
-                ).head,
-                result;
+        function (done) {
+            retext.parse('Alfred. Bertrand. Cees. Dick. Eric.',
+                function (err, tree) {
+                    var range,
+                        node,
+                        result;
 
-            range.setStart(paragraphNode.head);
-            range.setEnd(paragraphNode.tail);
-            result = range.getContent();
-            assert(result.length === 9);
-            assert(result[0] === paragraphNode.head);
-            assert(result[8] === paragraphNode.tail);
+                    node = tree.head;
 
-            range.setStart(paragraphNode.head.next.next);
-            result = range.getContent();
-            assert(result.length === 7);
-            assert(result[0] === paragraphNode.head.next.next);
-            assert(result[6] === paragraphNode.tail);
+                    range = new Range();
 
-            range.setEnd(paragraphNode.tail.prev.prev);
-            result = range.getContent();
-            assert(result.length === 5);
-            assert(result[0] === paragraphNode.head.next.next);
-            assert(result[4] === paragraphNode.tail.prev.prev);
+                    range.setStart(node.head);
+                    range.setEnd(node.tail);
+                    result = range.getContent();
+
+                    assert(result.length === 9);
+                    assert(result[0] === node.head);
+                    assert(result[8] === node.tail);
+
+                    range.setStart(node.head.next.next);
+                    result = range.getContent();
+                    assert(result.length === 7);
+                    assert(result[0] === node.head.next.next);
+                    assert(result[6] === node.tail);
+
+                    range.setEnd(node.tail.prev.prev);
+                    result = range.getContent();
+                    assert(result.length === 5);
+                    assert(result[0] === node.head.next.next);
+                    assert(result[4] === node.tail.prev.prev);
+
+                    done(err);
+                }
+            );
         }
     );
 
     it('should return an array containing elements of different grandparents',
-        function () {
-            var range = new Range(),
-                root = retext.parse('Alfred.\n\nBertrand.'),
-                result;
+        function (done) {
+            retext.parse('Alfred.\n\nBertrand.', function (err, tree) {
+                var range,
+                    result;
 
-            range.setStart(root.head);
-            range.setEnd(root.tail);
-            result = range.getContent();
-            assert(result.length === 3);
-            assert(result[0] === root.head);
-            assert(result[1] === root.head.next);
-            assert(result[2] === root.tail);
+                range = new Range();
+                range.setStart(tree.head);
+                range.setEnd(tree.tail);
+                result = range.getContent();
+
+                assert(result.length === 3);
+                assert(result[0] === tree.head);
+                assert(result[1] === tree.head.next);
+                assert(result[2] === tree.tail);
+
+                done(err);
+            });
         }
     );
 
-    it('should return an array containing children, when startContainer ' +
-        'equals endContainer, is an Element node, and endOffset is NOT ' +
-        'equal to or greater than the length of node', function () {
-            var range = new Range(),
-                paragraphNode = retext.parse('Alfred. Bertrand. Cees.').head,
-                result;
+    it('should return an array containing children, when `startContainer` ' +
+        'is `endContainer`, an `Element`, and `endOffset` is NOT ' +
+        'equal to or greater than the node\'s `length`',
+        function (done) {
+            retext.parse('Alfred. Bertrand. Cees.', function (err, tree) {
+                var range,
+                    node,
+                    result;
 
-            range.setStart(paragraphNode);
-            range.setEnd(paragraphNode, 3);
-            result = range.getContent();
-            assert(result.length === 3);
-            assert(result[0] === paragraphNode.head);
-            assert(result[1] === paragraphNode.head.next);
-            assert(result[2] === paragraphNode.head.next.next);
+                node = tree.head;
 
-            range.setStart(paragraphNode, 2);
-            result = range.getContent();
-            assert(result.length === 1);
-            assert(result[0] === paragraphNode.head.next.next);
+                range = new Range();
+
+                range.setStart(node);
+                range.setEnd(node, 3);
+                result = range.getContent();
+
+                assert(result.length === 3);
+                assert(result[0] === node.head);
+                assert(result[1] === node.head.next);
+                assert(result[2] === node.head.next.next);
+
+                range.setStart(node, 2);
+                result = range.getContent();
+
+                assert(result.length === 1);
+                assert(result[0] === node.head.next.next);
+
+                done(err);
+            });
         }
     );
 
-    it('should return an array containing children, when startContainer ' +
-        'is an Element node, and endContainer is inside startContainer',
-        function () {
-            var range = new Range(),
-                sentenceNode = retext.parse(
-                    'Alfred bertrand cees.'
-                ).head.head,
-                result;
+    it('should return an array containing children, when `startContainer` ' +
+        'is an `Element` and `endContainer` is inside `startContainer`',
+        function (done) {
+            retext.parse('Alfred Bertrand Cees.', function (err, tree) {
+                var range,
+                    node,
+                    result;
 
-            range.setStart(sentenceNode);
-            range.setEnd(sentenceNode.tail.prev);
-            result = range.getContent();
-            assert(result.length === 5);
-            assert(result[0] === sentenceNode.head);
-            assert(result[1] === sentenceNode.head.next);
-            assert(result[2] === sentenceNode.head.next.next);
-            assert(result[3] === sentenceNode.head.next.next.next);
-            assert(result[4] === sentenceNode.head.next.next.next.next);
+                node = tree.head.head;
 
-            range.setStart(sentenceNode, 2);
-            result = range.getContent();
-            assert(result.length === 3);
-            assert(result[0] === sentenceNode.head.next.next);
-            assert(result[1] === sentenceNode.head.next.next.next);
-            assert(result[2] === sentenceNode.head.next.next.next.next);
+                range = new Range();
+
+                range.setStart(node);
+                range.setEnd(node.tail.prev);
+                result = range.getContent();
+
+                assert(result.length === 5);
+                assert(result[0] === node.head);
+                assert(result[1] === node.head.next);
+                assert(result[2] === node.head.next.next);
+                assert(result[3] === node.head.next.next.next);
+                assert(result[4] === node.head.next.next.next.next);
+
+                range.setStart(node, 2);
+                result = range.getContent();
+
+                assert(result.length === 3);
+                assert(result[0] === node.head.next.next);
+                assert(result[1] === node.head.next.next.next);
+                assert(result[2] === node.head.next.next.next.next);
+
+                done(err);
+            });
         }
     );
 
-    it('should return an array containing children but excluding ' +
-        'startContainer, when startOffset is more than the length ' +
-        'of startContainer', function () {
-            var range = new Range(),
-                root = retext.parse('Alfred. Bertrand.\n\nCees. Dick.'),
-                result;
+    it('should return an array containing children, excluding ' +
+        '`startContainer`, when `startOffset` is higher than ' +
+        '`startContainer`s `length`',
+        function (done) {
+            retext.parse(
+                'Alfred. Bertrand.\n\nCees. Dick.',
+                function (err, tree) {
+                    var range,
+                        result;
 
-            range.setStart(root.head.head, Infinity);
-            range.setEnd(root.tail.tail.tail.head);
-            result = range.getContent();
-            assert(result.toString() === ' ,Bertrand.,\n\n,Cees., ,Dick,.');
+                    range = new Range();
+                    range.setStart(tree.head.head, Infinity);
+                    range.setEnd(tree.tail.tail.tail.head);
+                    result = range.getContent();
 
-            range.setStart(root.head, Infinity);
-            result = range.getContent();
-            assert(result.toString() === '\n\n,Cees., ,Dick,.');
+                    assert(
+                        result.toString() ===
+                        ' ,Bertrand.,\n\n,Cees., ,Dick,.'
+                    );
 
-            range = new Range();
-            range.setStart(root.head.tail, Infinity);
-            range.setEnd(root.tail.tail.tail);
-            result = range.toString();
-            assert(result.toString() === '\n\nCees. Dick.');
+                    range.setStart(tree.head, Infinity);
+                    result = range.getContent();
+
+                    assert(
+                        result.toString() ===
+                        '\n\n,Cees., ,Dick,.'
+                    );
+
+                    range = new Range();
+                    range.setStart(tree.head.tail, Infinity);
+                    range.setEnd(tree.tail.tail.tail);
+                    result = range.toString();
+
+                    assert(result.toString() === '\n\nCees. Dick.');
+
+                    done(err);
+                }
+            );
         }
     );
 
-    it('should return an array containing children, when endContainer ' +
-        'is an element, and endOffset is equal to or greater than the ' +
-        'length of node', function () {
-            var range = new Range(),
-                root = retext.parse('Alfred. Bertrand.\n\nCees. Dick.'),
-                result;
+    it('should return an array containing children, when `endContainer` ' +
+        'is an `Element`, and `endOffset` is equal to or greater than the ' +
+        'node\'s `length`',
+        function (done) {
+            retext.parse(
+                'Alfred. Bertrand.\n\nCees. Dick.',
+                function (err, tree) {
+                    var range,
+                        result;
 
-            range.setStart(root.head.head.head);
-            range.setEnd(root.tail.tail, Infinity);
-            result = range.getContent();
-            assert(
-                result.toString() === 'Alfred,., ,Bertrand.,\n\n,Cees. Dick.'
+                    range = new Range();
+                    range.setStart(tree.head.head.head);
+                    range.setEnd(tree.tail.tail, Infinity);
+                    result = range.getContent();
+
+                    assert(
+                        result.toString() ===
+                        'Alfred,., ,Bertrand.,\n\n,Cees. Dick.'
+                    );
+
+                    done(err);
+                }
             );
         }
     );
 
     it('should return an array containing children, when endContainer ' +
         'is an element, and endOffset is less than the length of node',
-        function () {
-            var range = new Range(),
-                root = retext.parse('Alfred. Bertrand.\n\nCees. Dick.'),
-                result;
+        function (done) {
+            retext.parse(
+                'Alfred. Bertrand.\n\nCees. Dick.',
+                function (err, tree) {
+                    var range,
+                        result;
 
-            range.setStart(root.head);
-            range.setEnd(root.tail.tail, 1);
+                    range = new Range();
+                    range.setStart(tree.head);
+                    range.setEnd(tree.tail.tail, 1);
+                    result = range.getContent();
 
-            result = range.getContent();
-            assert(
-                result.toString() === 'Alfred. Bertrand.,\n\n,Cees., ,Dick'
-            );
+                    assert(
+                        result.toString() ===
+                        'Alfred. Bertrand.,\n\n,Cees., ,Dick'
+                    );
 
-            range.setEnd(root.tail, 1);
+                    range.setEnd(tree.tail, 1);
+                    result = range.getContent();
 
-            result = range.getContent();
-            assert(
-                result.toString() === 'Alfred. Bertrand.,\n\n,Cees.'
+                    assert(
+                        result.toString() === 'Alfred. Bertrand.,\n\n,Cees.'
+                    );
+
+                    done(err);
+                }
             );
         }
     );
