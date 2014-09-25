@@ -130,6 +130,7 @@ function attach(retext) {
      *
      * @param {Node} container - Node to start the range at.
      * @param {number?} offset - Offset of `container`.
+     * @return this
      */
 
     rangePrototype.setStart = function (container, offset) {
@@ -219,6 +220,8 @@ function attach(retext) {
             self.startContainer = container;
             self.startOffset = offset;
         }
+
+        return self;
     };
 
     /**
@@ -226,6 +229,7 @@ function attach(retext) {
      *
      * @param {Node} container - Node to end the range at.
      * @param {number?} offset - Offset of `container`.
+     * @return this
      */
 
     rangePrototype.setEnd = function (container, offset) {
@@ -308,6 +312,8 @@ function attach(retext) {
             self.endContainer = container;
             self.endOffset = offset;
         }
+
+        return self;
     };
 
     /**

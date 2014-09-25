@@ -195,6 +195,14 @@ describe('TextOM.Range#setStart(node, offset?)', function () {
         }
     );
 
+    it('should return `self`', function () {
+        var range;
+
+        range = new Range();
+
+        assert(range.setStart(new TextOM.WordNode()) === range);
+    });
+
     it('should set `startContainer` and `startOffset` to the given values',
         function () {
             var range,
@@ -442,6 +450,14 @@ describe('TextOM.Range#setEnd(node, offset?)', function () {
             });
         }
     );
+
+    it('should return `self`', function () {
+        var range;
+
+        range = new Range();
+
+        assert(range.setEnd(new TextOM.WordNode()) === range);
+    });
 
     it('should set `endContainer` and `endOffset` to the given values',
         function () {
