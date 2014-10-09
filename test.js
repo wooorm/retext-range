@@ -11,7 +11,7 @@ var retextRange,
  * Module dependencies.
  */
 
-retextRange = require('..');
+retextRange = require('./');
 Retext = require('retext');
 assert = require('assert');
 
