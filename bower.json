@@ -7,6 +7,10 @@
     "retext",
     "range"
   ],
+  "dependencies": {
+    "retext-find": "^0.1.0",
+    "retext-walk": "^0.0.1"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/wooorm/retext-range.git"

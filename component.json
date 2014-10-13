@@ -7,6 +7,10 @@
     "retext",
     "range"
   ],
+  "dependencies": {
+    "wooorm/retext-find": "^0.1.0",
+    "wooorm/retext-walk": "^0.0.1"
+  },
   "repository": "wooorm/retext-range",
   "scripts" : [
     "index.js"

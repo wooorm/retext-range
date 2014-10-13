@@ -1,6 +1,16 @@
 'use strict';
 
 /**
+ * Dependencies.
+ */
+
+var retextFind,
+    retextWalk;
+
+retextFind = require('retext-find');
+retextWalk = require('retext-walk');
+
+/**
  * Constants.
  */
 
@@ -22,19 +32,7 @@ function retextRange() {}
  */
 
 function findAncestors(node) {
-    var result;
-
-    result = [];
-
-    while (node) {
-        if (!node.parent) {
-            return result;
-        }
-
-        result.push(node);
-
-        node = node.parent;
-    }
+    return 'findParents' in node ? node.findParents() : [];
 }
 
 /**
@@ -49,27 +47,26 @@ function findRoot(node) {
 
     result = findAncestors(node);
 
-    return result[result.length - 1].parent;
+    return result[result.length - 1];
 }
 
 /**
- * Find the first next node, including siblings
- * of ancestors.
+ * Get the first child of `container`.
  *
- * @param {Node}
- * @return {(Node|null)}
+ * @param {Element|Child}
+ * @return {Child?}
  */
 
-function findNextAncestor(node) {
-    while (node) {
-        node = node.parent;
+function findJustBefore(container) {
+    var node;
 
-        if (node && node.next) {
-            return node.next;
-        }
+    node = container.findBefore();
+
+    if (!node && 'findFirstChild' in container) {
+        node = container.findFirstChild();
     }
 
-    return null;
+    return node || container;
 }
 
 /**
@@ -80,6 +77,12 @@ function findNextAncestor(node) {
 
 function attach(retext) {
     var rangePrototype;
+
+    /**
+     * Dependencies.
+     */
+
+    retext.use(retextFind).use(retextWalk);
 
     /**
      * Create `Range`.
@@ -138,9 +141,7 @@ function attach(retext) {
             endContainer,
             endOffset,
             offsetIsDefault,
-            shouldSwitch,
-            endAncestors,
-            node;
+            shouldSwitch;
 
         if (!container) {
             throw new TypeError(
@@ -191,23 +192,13 @@ function attach(retext) {
             if (endContainer === container) {
                 shouldSwitch = endOffset < offset;
             } else {
-                endAncestors = findAncestors(endContainer);
-
-                node = container;
-
-                while (node) {
+                findJustBefore(container).walkForwards(function (node) {
                     if (node === endContainer) {
                         shouldSwitch = false;
 
-                        break;
+                        return false;
                     }
-
-                    if (endAncestors.indexOf(node) === -1) {
-                        node = node.next || findNextAncestor(node);
-                    } else {
-                        node = node.head;
-                    }
-                }
+                });
             }
         }
 
@@ -237,9 +228,7 @@ function attach(retext) {
             startContainer,
             startOffset,
             offsetIsDefault,
-            shouldSwitch,
-            endAncestors,
-            node;
+            shouldSwitch;
 
         if (!container) {
             throw new Error(
@@ -283,23 +272,13 @@ function attach(retext) {
             if (startContainer === container) {
                 shouldSwitch = startOffset > offset;
             } else {
-                endAncestors = findAncestors(container);
-
-                node = startContainer;
-
-                while (node) {
+                findJustBefore(startContainer).walkForwards(function (node) {
                     if (node === container) {
                         shouldSwitch = false;
 
-                        break;
+                        return false;
                     }
-
-                    if (endAncestors.indexOf(node) === -1) {
-                        node = node.next || findNextAncestor(node);
-                    } else {
-                        node = node.head;
-                    }
-                }
+                });
             }
         }
 
@@ -556,7 +535,7 @@ function attach(retext) {
                 startContainer = startContainer[startOffset];
             } else {
                 startContainer =
-                    startContainer.next || findNextAncestor(startContainer);
+                    startContainer.next || startContainer.findAfterUpwards();
             }
         }
 
@@ -626,7 +605,7 @@ function attach(retext) {
             } else {
                 content.push(node);
 
-                node = node.next || findNextAncestor(node);
+                node = node.next || node.findAfterUpwards();
             }
         }
 
