@@ -1,5 +1,5 @@
 
-n.n.n / 2014-10-14
+0.1.2 / 2014-10-14
 ==================
 
  * Update retext-walk, jscs, retext
