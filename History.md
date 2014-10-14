@@ -1,4 +1,12 @@
 
+n.n.n / 2014-10-14
+==================
+
+ * Update retext-walk, jscs, retext
+ * Add retext-find, retext-walk as dependencies
+ * Update .gitignore, .npmignore, bower ignore
+ * Move spec to test.js
+
 0.1.1 / 2014-09-25
 ==================
 
