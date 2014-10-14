@@ -9,7 +9,7 @@
   ],
   "dependencies": {
     "retext-find": "^0.1.0",
-    "retext-walk": "^0.0.1"
+    "retext-walk": "^0.1.0"
   },
   "repository": {
     "type": "git",

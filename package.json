@@ -9,7 +9,7 @@
   ],
   "dependencies": {
     "retext-find": "^0.1.0",
-    "retext-walk": "^0.0.1"
+    "retext-walk": "^0.1.0"
   },
   "repository": {
     "type": "git",
@@ -19,9 +19,9 @@
   "devDependencies": {
     "eslint": "^0.8.0",
     "istanbul": "^0.3.0",
-    "jscs": "^1.6.0",
+    "jscs": "^1.7.0",
     "mocha": "^1.20.0",
-    "retext": "^0.2.0-rc.2"
+    "retext": "^0.2.0"
   },
   "scripts": {
     "test": "node_modules/.bin/_mocha --reporter spec --check-leaks -u exports test.js",
