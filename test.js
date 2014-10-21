@@ -1184,13 +1184,13 @@ describe('TextOM.Range#removeContent()', function () {
 
             range = new Range();
             range.setStart(node.head.head.head);
-            range.setEnd(node.tail.tail.head);
+            range.setEnd(node.tail.tail);
 
             assert(
                 range.removeContent().toString() === 'Alfred,., ,Bertrand,.'
             );
             assert(node.head.head.length === 0);
-            assert(node.tail.head.length === 0);
+            assert(node.tail.length === 0);
 
             complete(err);
         });
@@ -1203,14 +1203,14 @@ describe('TextOM.Range#removeContent()', function () {
 
             range = new Range();
             range.setStart(node.head.head.head, 1);
-            range.setEnd(node.tail.tail.head);
+            range.setEnd(node.tail.tail);
 
             assert(
                 range.removeContent().toString() === 'lfred,., ,Bertrand,.'
             );
             assert(node.head.head.length === 1);
             assert(node.head.toString() === 'A');
-            assert(node.tail.head.length === 0);
+            assert(node.tail.length === 0);
 
             complete(err);
         });
@@ -1246,7 +1246,7 @@ describe('TextOM.Range#removeContent()', function () {
 
                     range = new Range();
                     range.setStart(tree.head.head.head.head);
-                    range.setEnd(tree.tail.tail.tail.head);
+                    range.setEnd(tree.tail.tail.tail);
 
                     assert(
                         range.removeContent().toString() ===
@@ -1255,7 +1255,7 @@ describe('TextOM.Range#removeContent()', function () {
                     assert(tree.head.length === 1);
                     assert(tree.head.head.head.length === 0);
                     assert(tree.tail.length === 1);
-                    assert(tree.tail.head.head.length === 0);
+                    assert(tree.tail.head.length === 0);
 
                     complete(err);
                 }
@@ -1267,7 +1267,7 @@ describe('TextOM.Range#removeContent()', function () {
 
                     range = new Range();
                     range.setStart(tree.head.head.head.head, 2);
-                    range.setEnd(tree.tail.tail.tail.head);
+                    range.setEnd(tree.tail.tail.tail);
 
                     assert(
                         range.removeContent().toString() ===
@@ -1276,8 +1276,8 @@ describe('TextOM.Range#removeContent()', function () {
                     assert(tree.head.head.length === 1);
                     assert(tree.head.head.head.length === 1);
                     assert(tree.head.head.head.toString() === 'Al');
-                    assert(tree.tail.head.length === 1);
-                    assert(tree.tail.head.head.length === 0);
+                    assert(tree.tail.length === 1);
+                    assert(tree.tail.head.length === 0);
 
                     complete(err);
                 }
@@ -1518,7 +1518,7 @@ describe('TextOM.Range#getContent()', function () {
 
                 range = new Range();
                 range.setStart(node.head.head);
-                range.setEnd(node.tail.head);
+                range.setEnd(node.tail);
                 result = range.getContent();
 
                 assert(result.toString() === 'Alfred, ,bertrand,.');
@@ -1538,7 +1538,7 @@ describe('TextOM.Range#getContent()', function () {
 
                 range = new Range();
                 range.setStart(tree.head.head.head.head);
-                range.setEnd(tree.tail.head.tail.head);
+                range.setEnd(tree.tail.head.tail);
                 result = range.getContent();
 
                 assert(result.toString() === 'Alfred,.,\n\n,Bertrand,.');
@@ -1737,7 +1737,7 @@ describe('TextOM.Range#getContent()', function () {
 
                     range = new Range();
                     range.setStart(tree.head.head, Infinity);
-                    range.setEnd(tree.tail.tail.tail.head);
+                    range.setEnd(tree.tail.tail.tail);
                     result = range.getContent();
 
                     assert(
