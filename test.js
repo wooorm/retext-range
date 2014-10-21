@@ -1,6 +1,7 @@
 'use strict';
 
 var retextRange,
+    inspect,
     Retext,
     assert,
     retext,
@@ -12,6 +13,7 @@ var retextRange,
  */
 
 retextRange = require('./');
+inspect = require('retext-inspect');
 Retext = require('retext');
 assert = require('assert');
 
@@ -19,7 +21,7 @@ assert = require('assert');
  * Retext.
  */
 
-retext = new Retext().use(retextRange);
+retext = new Retext().use(retextRange).use(inspect);
 
 TextOM = retext.TextOM;
 Range = TextOM.Range;
