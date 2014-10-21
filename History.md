@@ -1,4 +1,13 @@
 
+n.n.n / 2014-10-21
+==================
+
+ * Refactor .jscs.json
+ * Refactor test
+ * Update test for changes in retext
+ * Add retext-inspect to dev-dependencies
+ * Update retext
+
 0.1.2 / 2014-10-14
 ==================
 
