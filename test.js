@@ -1,16 +1,13 @@
 'use strict';
 
+/**
+ * Dependencies.
+ */
+
 var retextRange,
     inspect,
     Retext,
-    assert,
-    retext,
-    TextOM,
-    Range;
-
-/**
- * Module dependencies.
- */
+    assert;
 
 retextRange = require('./');
 inspect = require('retext-inspect');
@@ -20,6 +17,10 @@ assert = require('assert');
 /**
  * Retext.
  */
+
+var retext,
+    TextOM,
+    Range;
 
 retext = new Retext().use(retextRange).use(inspect);
 
