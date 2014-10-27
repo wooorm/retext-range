@@ -19,12 +19,6 @@ var slice;
 slice = Array.prototype.slice;
 
 /**
- * Define `retextRange`.
- */
-
-function retextRange() {}
-
-/**
  * Get all ancestors of a node.
  *
  * @param {Node}
@@ -70,12 +64,12 @@ function findJustBefore(container) {
 }
 
 /**
- * Define `attach`.
+ * Define `retextRange`.
  *
  * @param {Retext} retext - Instance of Retext.
  */
 
-function attach(retext) {
+function retextRange(retext) {
     var rangePrototype;
 
     /**
@@ -618,12 +612,6 @@ function attach(retext) {
 
     retext.TextOM.Range = Range;
 }
-
-/**
- * Expose `attach`.
- */
-
-retextRange.attach = attach;
 
 /**
  * Expose `retextRange`.

@@ -57,12 +57,6 @@ describe('retext-range()', function () {
         assert(typeof retextRange === 'function');
     });
 
-    it('should have an `attach` method', function () {
-        assert(typeof retextRange.attach === 'function');
-    });
-});
-
-describe('retext-range.attach()', function () {
     it('should attach a `Range` constructor to `TextOM`', function () {
         assert('Range' in TextOM);
     });
