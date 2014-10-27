@@ -1,6 +1,6 @@
 {
   "name": "retext-range",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Sequences of content within a TextOM tree between two points",
   "license": "MIT",
   "keywords": [
