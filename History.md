@@ -1,4 +1,15 @@
 
+n.n.n / 2014-11-20
+==================
+
+ * Add support for `offset` in detecting if `start` and `end` should switch
+ * Refactor example in `Readme.md`
+ * Add flat badges to `Readme.md`
+ * Fix incorrect executive rights on `test.js`
+ * Refactor npm script targets in `package.json`
+ * Add missing `.eslintrc` file
+ * Update retext, retext-inspect
+
 0.1.4 / 2014-10-27
 ==================
 
