@@ -1,4 +1,4 @@
-# retext-range [![Build Status](https://travis-ci.org/wooorm/retext-range.svg?branch=master)](https://travis-ci.org/wooorm/retext-range) [![Coverage Status](https://img.shields.io/coveralls/wooorm/retext-range.svg)](https://coveralls.io/r/wooorm/retext-range?branch=master)
+# retext-range [![Build Status](https://img.shields.io/travis/wooorm/retext-range.svg?style=flat)](https://travis-ci.org/wooorm/retext-range) [![Coverage Status](https://img.shields.io/coveralls/wooorm/retext-range.svg?style=flat)](https://coveralls.io/r/wooorm/retext-range?branch=master)
 
 Ranges—similar to DOMs [Range](http://dom.spec.whatwg.org/#introduction-to-dom-ranges)—for [**retext**](https://github.com/wooorm/retext "Retext"): A **Range** represents a sequence of content within a **TextOM** tree. Each range has a start and an end (two “boundary points”—each a node and an offset). In other words, a range represents a piece of content within a TextOM tree between two points.
 
