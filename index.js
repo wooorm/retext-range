@@ -135,6 +135,8 @@ function retextRange(retext) {
             endContainer,
             endOffset,
             offsetIsDefault,
+            resolvedEndOffset,
+            end,
             shouldSwitch;
 
         if (!container) {
@@ -186,13 +188,27 @@ function retextRange(retext) {
             if (endContainer === container) {
                 shouldSwitch = endOffset < offset;
             } else {
-                findJustBefore(container).walkForwards(function (node) {
-                    if (node === endContainer) {
-                        shouldSwitch = false;
-
-                        return false;
+                if ('length' in endContainer) {
+                    if (endOffset >= endContainer.length) {
+                        resolvedEndOffset = endContainer.length - 1;
+                    } else {
+                        resolvedEndOffset = endOffset;
                     }
-                });
+
+                    end = endContainer[resolvedEndOffset];
+                } else {
+                    end = endContainer;
+                }
+
+                if (container !== end) {
+                    findJustBefore(container).walkForwards(function (node) {
+                        if (node === end) {
+                            shouldSwitch = false;
+
+                            return false;
+                        }
+                    });
+                }
             }
         }
 
@@ -221,6 +237,8 @@ function retextRange(retext) {
         var self,
             startContainer,
             startOffset,
+            resolvedStartOffset,
+            start,
             offsetIsDefault,
             shouldSwitch;
 
@@ -266,13 +284,27 @@ function retextRange(retext) {
             if (startContainer === container) {
                 shouldSwitch = startOffset > offset;
             } else {
-                findJustBefore(startContainer).walkForwards(function (node) {
-                    if (node === container) {
-                        shouldSwitch = false;
-
-                        return false;
+                if ('length' in startContainer) {
+                    if (startOffset >= startContainer.length) {
+                        resolvedStartOffset = startContainer.length - 1;
+                    } else {
+                        resolvedStartOffset = startOffset;
                     }
-                });
+
+                    start = startContainer[resolvedStartOffset];
+                } else {
+                    start = startContainer;
+                }
+
+                if (container !== start) {
+                    findJustBefore(start).walkForwards(function (node) {
+                        if (node === container) {
+                            shouldSwitch = false;
+
+                            return false;
+                        }
+                    });
+                }
             }
         }
 

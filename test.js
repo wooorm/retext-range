@@ -256,6 +256,8 @@ describe('TextOM.Range#setStart(node, offset?)', function () {
             range.setEnd(node.parent);
             range.setStart(node);
 
+            console.log(range);
+
             assert(range.endContainer === node);
             assert(range.startContainer === node.parent);
 
@@ -263,8 +265,86 @@ describe('TextOM.Range#setStart(node, offset?)', function () {
             range.setEnd(node.parent.parent);
             range.setStart(node);
 
+            console.log(range);
+
             assert(range.endContainer === node);
             assert(range.startContainer === node.parent.parent);
+        }
+    );
+
+    it('should NOT switch the given values with the current end values, ' +
+        'when `node` is a descendant of `endContainer` but `endOffset`' +
+        'is higher than offset',
+        function () {
+            var range,
+                sentence;
+
+            sentence = new TextOM.ParagraphNode()
+                .append(new TextOM.SentenceNode());
+
+            sentence
+                .append(new TextOM.WordNode())
+                .append(new TextOM.TextNode('Some'));
+
+            sentence.append(new TextOM.WhiteSpaceNode(' '));
+
+            sentence
+                .append(new TextOM.WordNode())
+                .append(new TextOM.TextNode('English'));
+
+            sentence.append(new TextOM.WhiteSpaceNode(' '));
+
+            sentence
+                .append(new TextOM.WordNode())
+                .append(new TextOM.TextNode('words'));
+
+            sentence.append(new TextOM.PunctuationNode('.'));
+
+            range = new Range();
+
+            range.setEnd(sentence);
+            range.setStart(sentence.head);
+
+            assert(range.endContainer === sentence);
+            assert(range.startContainer === sentence.head);
+        }
+    );
+
+    it('should switch the given values with the current end values, ' +
+        'when `node` is a descendant of `endContainer` and `endOffset`' +
+        'is lower than offset',
+        function () {
+            var range,
+                sentence;
+
+            sentence = new TextOM.ParagraphNode()
+                .append(new TextOM.SentenceNode());
+
+            sentence
+                .append(new TextOM.WordNode())
+                .append(new TextOM.TextNode('Some'));
+
+            sentence.append(new TextOM.WhiteSpaceNode(' '));
+
+            sentence
+                .append(new TextOM.WordNode())
+                .append(new TextOM.TextNode('English'));
+
+            sentence.append(new TextOM.WhiteSpaceNode(' '));
+
+            sentence
+                .append(new TextOM.WordNode())
+                .append(new TextOM.TextNode('words'));
+
+            sentence.append(new TextOM.PunctuationNode('.'));
+
+            range = new Range();
+
+            range.setEnd(sentence, 0);
+            range.setStart(sentence.head.next);
+
+            assert(range.startContainer === sentence);
+            assert(range.endContainer === sentence.head.next);
         }
     );
 
@@ -295,13 +375,6 @@ describe('TextOM.Range#setStart(node, offset?)', function () {
                     range.setStart(tree.tail.tail.tail);
 
                     assert(range.startContainer === tree.head.head.tail);
-                    assert(range.endContainer === tree.tail.tail.tail);
-
-                    range = new Range();
-                    range.setEnd(tree.tail.tail);
-                    range.setStart(tree.tail.tail.tail);
-
-                    assert(range.startContainer === tree.tail.tail);
                     assert(range.endContainer === tree.tail.tail.tail);
 
                     range = new Range();
@@ -470,6 +543,29 @@ describe('TextOM.Range#setEnd(node, offset?)', function () {
 
             assert(range.endContainer === node);
             assert(range.endOffset === offset);
+        }
+    );
+
+    it('should switch the given values with the current end values, ' +
+        'when `node` is a descendant of `endContainer` and `endOffset` ' +
+        'points to `node`',
+        function () {
+            var range,
+                node;
+
+            node = new TextOM.RootNode()
+                .append(new TextOM.ParagraphNode())
+                .append(new TextOM.SentenceNode())
+                .append(new TextOM.WordNode())
+                .append(new TextOM.TextNode('test'))
+                .parent;
+
+            range = new Range();
+            range.setStart(node.parent, 0);
+            range.setEnd(node);
+
+            assert(range.startContainer === node);
+            assert(range.endContainer === node.parent);
         }
     );
 
