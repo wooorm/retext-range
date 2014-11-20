@@ -22,12 +22,10 @@ $ bower install retext-range
 ## Usage
 
 ```js
-var Retext, retextRange, retext;
+var Retext = require('retext');
+var range = require('retext-range');
 
-Retext = require('retext');
-retextRange = require('retext-range');
-
-retext = new Retext().use(retextRange);
+var retext = new Retext().use(range);
 
 retext.parse(
     'Some simple English words in a sentence. And some ' +
