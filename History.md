@@ -1,5 +1,5 @@
 
-n.n.n / 2014-11-20
+0.2.0 / 2014-11-20
 ==================
 
  * Add support for `offset` in detecting if `start` and `end` should switch
