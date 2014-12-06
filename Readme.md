@@ -61,11 +61,11 @@ The white space between the two sentences is however removed, as it was complete
 
 ## API
 
-#### [TextOM](https://github.com/wooorm/textom).Range()
+### [TextOM](https://github.com/wooorm/textom).Range()
 
 Constructor. Creates a new range.
 
-##### [TextOM.Range](#textomrange)#setStart(node, offset?)
+### [TextOM.Range](#textomrange)#setStart(node, offset?)
 
 Set `startContainer` and `startOffset` of `range`.
 
@@ -74,7 +74,7 @@ Set `startContainer` and `startOffset` of `range`.
 
 Returns self.
 
-##### [TextOM.Range](#textomrange)#setEnd(node, offset?)
+### [TextOM.Range](#textomrange)#setEnd(node, offset?)
 
 Set `endContainer` and `endOffset` of `range`.
 
@@ -83,19 +83,47 @@ Set `endContainer` and `endOffset` of `range`.
 
 Returns self.
 
-##### [TextOM.Range](#textomrange)#toString()
+### [TextOM.Range](#textomrange)#toString()
 
 Returns text (`string`) of by `range` (partially) covered nodes.
 
-##### [TextOM.Range](#textomrange)#removeContent()
+### [TextOM.Range](#textomrange)#removeContent()
 
 Split partially covered nodes. Remove all covered nodes.
 
 Returns all nodes (`Array` of [`Node`](https://github.com/wooorm/textom#textomnode-nlcstnode)s).
 
-##### [TextOM.Range](#textomrange)#getContent()
+### [TextOM.Range](#textomrange)#getContent()
 
 Returns by `range` covered nodes (`Array` of [`Node`](https://github.com/wooorm/textom#textomnode-nlcstnode)s). Ignores partially covered [`Text`](https://github.com/wooorm/textom#textomtextvalue-nlcsttext)s.
+
+## Performance
+
+```
+                  TextOM.Range#setStart()
+  18,898,197 op/s » A section
+  17,423,587 op/s » An article
+
+                  TextOM.Range#setEnd()
+  16,153,655 op/s » A section
+  17,243,205 op/s » An article
+
+                  TextOM.Range#setStart() and TextOM.Range#setEnd()
+       8,783 op/s » A section
+         680 op/s » An article
+
+                  TextOM.Range#setEnd() and TextOM.Range#setStart()
+       7,907 op/s » A section
+         698 op/s » An article
+
+                  TextOM.Range#toString()
+       1,212 op/s » A section
+         120 op/s » An article
+
+                  TextOM.Range#getContent()
+     335,883 op/s » A section
+     110,833 op/s » An article
+```
 
 ## License
 
