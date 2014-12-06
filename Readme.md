@@ -1,6 +1,6 @@
 # retext-range [![Build Status](https://img.shields.io/travis/wooorm/retext-range.svg?style=flat)](https://travis-ci.org/wooorm/retext-range) [![Coverage Status](https://img.shields.io/coveralls/wooorm/retext-range.svg?style=flat)](https://coveralls.io/r/wooorm/retext-range?branch=master)
 
-Ranges—similar to DOMs [Range](http://dom.spec.whatwg.org/#introduction-to-dom-ranges)—for [**retext**](https://github.com/wooorm/retext "Retext"): A **Range** represents a sequence of content within a **TextOM** tree. Each range has a start and an end (two “boundary points”—each a node and an offset). In other words, a range represents a piece of content within a TextOM tree between two points.
+Ranges—similar to DOMs [Range](http://dom.spec.whatwg.org/#introduction-to-dom-ranges), for [**retext**](https://github.com/wooorm/retext)—represent a sequence of content within a [**TextOM**](https://github.com/wooorm/textom) tree. Each range has a start and end (two “boundary points”—each a node and an offset). In other words, a range represents a piece of content within a [**TextOM**](https://github.com/wooorm/textom) tree between two points.
 
 ## Installation
 
@@ -31,28 +31,23 @@ retext.parse(
     'Some simple English words in a sentence. And some ' +
     'more words in another sentence.',
     function (err, tree) {
-        var range, firstSentence, lastSentence, start, end;
+        if (err) throw err;
 
-        /* Handle errors. */
-        if (err) {
-            throw err;
-        }
-
-        range = new tree.TextOM.Range();
-        firstSentence = tree.head.head;
-        lastSentence = tree.head.tail;
+        var range = new tree.TextOM.Range();
+        var firstSentence = tree.head.head;
+        var lastSentence = tree.head.tail;
 
         /* WhiteSpaceNode: " ", after "a" */
-        start = firstSentence[11];
+        var start = firstSentence[11];
 
         /* WordNode: "another" */
-        end = lastSentence[10];
+        var end = lastSentence[10];
 
-        /* Select some content: */
+        /* Select some content */
         range.setStart(start);
         range.setEnd(end.head, 1); /* "a|nother" */
 
-        /* Remove the content covered by the range: */
+        /* Remove nodes covered by range */
         range.removeContent();
 
         tree.toString();
@@ -61,45 +56,46 @@ retext.parse(
 );
 ```
 
-Note that the sentences are **not** joined together, **retext-range** is agnostic about content (meaning), and just looks at the selected nodes. The white space between the two sentences is however removed, as it was completely covered by the range.
+Note that the sentences are _NOT_ joined together, **retext-range** is agnostic to “meaning”, and just looks at the selected nodes.
+The white space between the two sentences is however removed, as it was completely covered by the range.
 
 ## API
 
-#### TextOM.Range()
+#### [TextOM](https://github.com/wooorm/textom).Range()
 
-Constructor. Creates a new Range.
+Constructor. Creates a new range.
 
-##### TextOM\.Range#setStart(node, offset?)
+##### [TextOM.Range](#textomrange)#setStart(node, offset?)
 
-Set the start container and offset of a range.
+Set `startContainer` and `startOffset` of `range`.
 
-- node (`Node`): Node to start the range at.
-- offset (Non-negative integer [`number`], `null`, or `Infinity`): Point to start at, defaults to `0`.
-
-Returns self.
-
-##### TextOM\.Range#setEnd(node, offset?)
-
-Set the end container and offset of a range.
-
-- node (`Node`): Node to end the range at.
-- offset (Non-negative integer [`Number`], `null`, or `Infinity`): Point to end at, defaults to `Infinity`.
+- `node` ([`Node`](https://github.com/wooorm/textom#textomnode-nlcstnode)) — Object to start `range` at.
+- `offset` (Non-negative integer `number`, `null`, or `Infinity`) — Point in `node` to start at, defaults to `0`.
 
 Returns self.
 
-##### TextOM\.Range#toString()
+##### [TextOM.Range](#textomrange)#setEnd(node, offset?)
 
-Returns the result of calling `toString` on each completely covered node inside `range`, sub-stringing partially covered nodes where necessary.
+Set `endContainer` and `endOffset` of `range`.
 
-##### TextOM\.Range#removeContent()
+- `node` ([`Node`](https://github.com/wooorm/textom#textomnode-nlcstnode)) — Object to end `range` at.
+- `offset` (Non-negative integer `number`, `null`, or `Infinity`) — Point in `node` to end at, defaults to `Infinity`.
 
-Removes each completely covered node inside `range`, removes the covered part of partially covered nodes.
+Returns self.
 
-Returns an array containing the removed nodes.
+##### [TextOM.Range](#textomrange)#toString()
 
-##### TextOM\.Range#getContent()
+Returns text (`string`) of by `range` (partially) covered nodes.
 
-Returns an array containing each completely covered node inside `range`, ignores partially covered `Text` nodes (`TextNode`, `SourceNode`).
+##### [TextOM.Range](#textomrange)#removeContent()
+
+Split partially covered nodes. Remove all covered nodes.
+
+Returns all nodes (`Array` of [`Node`](https://github.com/wooorm/textom#textomnode-nlcstnode)s).
+
+##### [TextOM.Range](#textomrange)#getContent()
+
+Returns by `range` covered nodes (`Array` of [`Node`](https://github.com/wooorm/textom#textomnode-nlcstnode)s). Ignores partially covered [`Text`](https://github.com/wooorm/textom#textomtextvalue-nlcsttext)s.
 
 ## License
 
