@@ -4,19 +4,19 @@ Ranges—similar to DOMs [Range](http://dom.spec.whatwg.org/#introduction-to-dom
 
 ## Installation
 
-npm:
+[npm](https://docs.npmjs.com/cli/install):
 
 ```bash
 $ npm install retext-range
 ```
 
-Component:
+[Component.js](https://github.com/componentjs/component):
 
 ```bash
 $ component install wooorm/retext-range
 ```
 
-Bower:
+[Bower](http://bower.io/#install-packages):
 
 ```bash
 $ bower install retext-range
