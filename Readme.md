@@ -140,4 +140,4 @@ Returns by `range` covered nodes (`Array` of [`Node`](https://github.com/wooorm/
 
 ## License
 
-MIT © [Titus Wormer](http://wooorm.com)
+[MIT](LICENSE) © [Titus Wormer](http://wooorm.com)
