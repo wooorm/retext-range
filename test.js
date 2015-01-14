@@ -161,7 +161,7 @@ describe('TextOM.Range#setStart(node, offset?)', function () {
             complete = completeFactory(done, 2);
 
             retext.parse('test1', function (err, tree1) {
-                retext.parse('test2', function (err, tree2) {
+                retext.parse('test2', function (exception, tree2) {
                     var range;
 
                     range = new Range();
@@ -172,7 +172,7 @@ describe('TextOM.Range#setStart(node, offset?)', function () {
                         range.setStart(tree2.head.head.head);
                     }, /WrongRootError/);
 
-                    complete(err);
+                    complete(exception);
                 });
 
                 complete(err);
@@ -491,7 +491,7 @@ describe('TextOM.Range#setEnd(node, offset?)', function () {
             complete = completeFactory(done, 2);
 
             retext.parse('test1', function (err, tree1) {
-                retext.parse('test2', function (err, tree2) {
+                retext.parse('test2', function (exception, tree2) {
                     var range;
 
                     range = new Range();
@@ -501,7 +501,7 @@ describe('TextOM.Range#setEnd(node, offset?)', function () {
                         range.setEnd(tree2.head.head.head);
                     }, /WrongRootError/);
 
-                    complete(err);
+                    complete(exception);
                 });
 
                 complete(err);
