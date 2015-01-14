@@ -1,6 +1,6 @@
 'use strict';
 
-/**
+/*
  * Dependencies.
  */
 
@@ -10,7 +10,7 @@ var retextFind,
 retextFind = require('retext-find');
 retextWalk = require('retext-walk');
 
-/**
+/*
  * Constants.
  */
 
@@ -21,10 +21,9 @@ slice = Array.prototype.slice;
 /**
  * Get all ancestors of a node.
  *
- * @param {Node}
+ * @param {Node} node
  * @return {Array.<Node>}
  */
-
 function findAncestors(node) {
     return 'findParents' in node ? node.findParents() : [];
 }
@@ -32,10 +31,9 @@ function findAncestors(node) {
 /**
  * Get the root of a node.
  *
- * @param {Node}
+ * @param {Node} node
  * @return {(Node|null)}
  */
-
 function findRoot(node) {
     var result;
 
@@ -47,10 +45,9 @@ function findRoot(node) {
 /**
  * Get the first child of `container`.
  *
- * @param {Element|Child}
+ * @param {Element|Child} container
  * @return {Child?}
  */
-
 function findJustBefore(container) {
     var node;
 
@@ -68,11 +65,10 @@ function findJustBefore(container) {
  *
  * @param {Retext} retext - Instance of Retext.
  */
-
 function retextRange(retext) {
     var rangePrototype;
 
-    /**
+    /*
      * Dependencies.
      */
 
@@ -80,13 +76,14 @@ function retextRange(retext) {
 
     /**
      * Create `Range`.
+     *
+     * @constructor {Range}
      */
-
     function Range() {}
 
     rangePrototype = Range.prototype;
 
-    /**
+    /*
      * The starting node of a range, null otherwise.
      *
      * @type {Node?}
@@ -95,7 +92,7 @@ function retextRange(retext) {
 
     rangePrototype.startContainer = null;
 
-    /**
+    /*
      * The starting offset of a range `null` when not existing.
      *
      * @type {number?}
@@ -104,7 +101,7 @@ function retextRange(retext) {
 
     rangePrototype.startOffset = null;
 
-    /**
+    /*
      * The ending node of a range, null otherwise.
      *
      * @type {Node?}
@@ -113,7 +110,7 @@ function retextRange(retext) {
 
     rangePrototype.endContainer = null;
 
-    /**
+    /*
      * The ending offset of a range, `null` when not existing.
      *
      * @type {number?}
@@ -127,9 +124,8 @@ function retextRange(retext) {
      *
      * @param {Node} container - Node to start the range at.
      * @param {number?} offset - Offset of `container`.
-     * @return this
+     * @return {this}
      */
-
     rangePrototype.setStart = function (container, offset) {
         var self,
             endContainer,
@@ -181,7 +177,7 @@ function retextRange(retext) {
                 );
             }
 
-            /**
+            /*
              * When container is also the endContainer.
              */
 
@@ -230,9 +226,8 @@ function retextRange(retext) {
      *
      * @param {Node} container - Node to end the range at.
      * @param {number?} offset - Offset of `container`.
-     * @return this
+     * @return {this}
      */
-
     rangePrototype.setEnd = function (container, offset) {
         var self,
             startContainer,
@@ -277,7 +272,7 @@ function retextRange(retext) {
                 );
             }
 
-            /**
+            /*
              * When container is also the startContainer.
              */
 
@@ -325,9 +320,8 @@ function retextRange(retext) {
      * Stringify every node in a range, substringing
      * where necessary;
      *
-     * @return {String}
+     * @return {string}
      */
-
     rangePrototype.toString = function () {
         var self,
             content,
@@ -378,7 +372,6 @@ function retextRange(retext) {
      *
      * @return {Array.<Node>} Removed nodes.
      */
-
     rangePrototype.removeContent = function () {
         var self,
             content,
@@ -478,7 +471,6 @@ function retextRange(retext) {
      *
      * @return {Array.<Node>} Completely covered nodes.
      */
-
     rangePrototype.getContent = function () {
         var content,
             self,
@@ -496,7 +488,7 @@ function retextRange(retext) {
         endContainer = self.endContainer;
         endOffset = self.endOffset;
 
-        /**
+        /*
          * Return an empty array when either:
          *
          * - `startContainer` or `endContainer` are not
@@ -518,7 +510,7 @@ function retextRange(retext) {
         }
 
         if (startContainer === endContainer) {
-            /**
+            /*
              * Return an array containing `startContainer`
              * when `startContainer` either:
              *
@@ -536,7 +528,7 @@ function retextRange(retext) {
                 return [startContainer];
             }
 
-            /**
+            /*
              * Return an array containing the children
              * of `startContainer` between `startOffset`
              * and `endOffset`.
@@ -549,7 +541,7 @@ function retextRange(retext) {
             startOffset !== 0 &&
             'length' in startContainer
         ) {
-            /**
+            /*
              * If a child exists at `startOffset`, let
              * `startContainer` be that child.
              *
@@ -565,7 +557,7 @@ function retextRange(retext) {
             }
         }
 
-        /**
+        /*
          * Find the highest covered ancestor of
          * `endContainer`.
          */
@@ -586,13 +578,13 @@ function retextRange(retext) {
 
         node = startContainer;
 
-        /**
+        /*
          * Get all nodes between start and end.
          */
 
         while (node) {
             if (node === endContainer) {
-                /**
+                /*
                  * Add `endContainer` to `content`, if
                  * `endContainer` either:
                  *
@@ -617,7 +609,7 @@ function retextRange(retext) {
                 break;
             }
 
-            /**
+            /*
              * If `node` is an ancestor of `endContainer`,
              * let `next` be its `head`.
              *
@@ -638,14 +630,14 @@ function retextRange(retext) {
         return content;
     };
 
-    /**
+    /*
      * Expose `Range` on `TextOM`.
      */
 
     retext.TextOM.Range = Range;
 }
 
-/**
+/*
  * Expose `retextRange`.
  */
 

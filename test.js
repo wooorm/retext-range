@@ -1,6 +1,6 @@
 'use strict';
 
-/**
+/*
  * Dependencies.
  */
 
@@ -14,7 +14,7 @@ inspect = require('retext-inspect');
 Retext = require('retext');
 assert = require('assert');
 
-/**
+/*
  * Retext.
  */
 
@@ -29,8 +29,11 @@ Range = TextOM.Range;
 
 /**
  * Factory for multiple async operations in a test.
+ *
+ * @param {function(Error?)} done
+ * @param {number} count
+ * @return {function(Error?)}
  */
-
 function completeFactory(done, count) {
     var exception;
 
@@ -48,7 +51,7 @@ function completeFactory(done, count) {
     };
 }
 
-/**
+/*
  * Tests.
  */
 
