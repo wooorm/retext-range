@@ -68,18 +68,22 @@ The white space between the two sentences is however removed, as it was complete
 
 Constructor. Creates a new range.
 
-### [TextOM.Range](#textomrange)#setStart(node, offset?)
+### [TextOM.Range](#textomrange)#setStart([node](https://github.com/wooorm/textom#textomnode-nlcstnode), offset?)
 
 Set `startContainer` and `startOffset` of `range`.
+
+Parameters:
 
 - `node` ([`Node`](https://github.com/wooorm/textom#textomnode-nlcstnode)) — Object to start `range` at.
 - `offset` (Non-negative integer `number`, `null`, or `Infinity`) — Point in `node` to start at, defaults to `0`.
 
 Returns self.
 
-### [TextOM.Range](#textomrange)#setEnd(node, offset?)
+### [TextOM.Range](#textomrange)#setEnd([node](https://github.com/wooorm/textom#textomnode-nlcstnode), offset?)
 
 Set `endContainer` and `endOffset` of `range`.
+
+Parameters:
 
 - `node` ([`Node`](https://github.com/wooorm/textom#textomnode-nlcstnode)) — Object to end `range` at.
 - `offset` (Non-negative integer `number`, `null`, or `Infinity`) — Point in `node` to end at, defaults to `Infinity`.
