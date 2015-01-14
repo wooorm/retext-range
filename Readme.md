@@ -22,6 +22,12 @@ $ component install wooorm/retext-range
 $ bower install retext-range
 ```
 
+[Duo](http://duojs.org/#getting-started):
+
+```javascript
+var range = require('wooorm/retext-range');
+```
+
 ## Usage
 
 ```javascript
