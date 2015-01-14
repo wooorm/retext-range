@@ -5,23 +5,26 @@ Ranges—similar to DOMs [Range](http://dom.spec.whatwg.org/#introduction-to-dom
 ## Installation
 
 npm:
-```sh
+
+```bash
 $ npm install retext-range
 ```
 
 Component:
-```sh
+
+```bash
 $ component install wooorm/retext-range
 ```
 
 Bower:
-```sh
+
+```bash
 $ bower install retext-range
 ```
 
 ## Usage
 
-```js
+```javascript
 var Retext = require('retext');
 var range = require('retext-range');
 
@@ -99,7 +102,7 @@ Returns by `range` covered nodes (`Array` of [`Node`](https://github.com/wooorm/
 
 ## Performance
 
-```
+```text
                   TextOM.Range#setStart()
   18,898,197 op/s » A section
   17,423,587 op/s » An article
